@@ -20,18 +20,19 @@
     "git:status": "git status"
   },
   "dependencies": {
+    "@radix-ui/react-slot": "^1.2.4",
+    "@supabase/ssr": "^0.7.0",
+    "@supabase/supabase-js": "^2.49.3",
+    "@tanstack/react-query": "^5.68.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
+    "lucide-react": "^0.469.0",
     "next": "16.0.3",
     "react": "19.2.0",
     "react-dom": "19.2.0",
-    "@supabase/supabase-js": "^2.49.3",
-    "@supabase/ssr": "^0.6.2",
-    "@tanstack/react-query": "^5.68.0",
-    "zustand": "^5.0.3",
-    "clsx": "^2.1.1",
-    "class-variance-authority": "^0.7.1",
-    "lucide-react": "^0.469.0",
     "recharts": "^2.15.0",
-    "date-fns": "^4.1.0"
+    "zustand": "^5.0.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

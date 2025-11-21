@@ -3,9 +3,9 @@ module.exports = {
     {
       name: 'webapp',
       script: 'npm',
-      args: 'run start:sandbox',
+      args: 'run dev:sandbox',
       env: {
-        NODE_ENV: 'production',
+        NODE_ENV: 'development',
         PORT: 3000
       },
       watch: false,
