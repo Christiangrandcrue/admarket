@@ -4,14 +4,34 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:sandbox": "next dev -H 0.0.0.0 -p 3000",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "start:sandbox": "next start -H 0.0.0.0 -p 3000",
+    "lint": "eslint",
+    "clean-port": "fuser -k 3000/tcp 2>/dev/null || true",
+    "pm2:start": "pm2 start ecosystem.config.cjs",
+    "pm2:restart": "pm2 restart webapp",
+    "pm2:stop": "pm2 stop webapp",
+    "pm2:delete": "pm2 delete webapp",
+    "pm2:logs": "pm2 logs webapp --nostream",
+    "git:init": "git init && git add . && git commit -m 'Initial commit'",
+    "git:commit": "git add . && git commit -m",
+    "git:status": "git status"
   },
   "dependencies": {
     "next": "16.0.3",
     "react": "19.2.0",
-    "react-dom": "19.2.0"
+    "react-dom": "19.2.0",
+    "@supabase/supabase-js": "^2.49.3",
+    "@supabase/ssr": "^0.6.2",
+    "@tanstack/react-query": "^5.68.0",
+    "zustand": "^5.0.3",
+    "clsx": "^2.1.1",
+    "class-variance-authority": "^0.7.1",
+    "lucide-react": "^0.469.0",
+    "recharts": "^2.15.0",
+    "date-fns": "^4.1.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

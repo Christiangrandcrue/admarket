@@ -1,0 +1,225 @@
+import { Channel, Campaign, Case } from '@/types'
+
+export const mockChannels: Channel[] = [
+  {
+    id: '1',
+    owner_user_id: 'creator-1',
+    platforms: ['instagram', 'tiktok'],
+    handle: '@fitness_coach_maria',
+    title: 'Мария - Фитнес & ЗОЖ',
+    description: 'Персональный тренер с 5-летним опытом. Делюсь эффективными тренировками и рецептами здорового питания.',
+    topics: ['fitness', 'lifestyle'],
+    metrics: {
+      followers: 285000,
+      avg_views: 45000,
+      er: 4.2,
+    },
+    audience: {
+      gender: { male: 25, female: 75 },
+      age: {
+        '13-17': 5,
+        '18-24': 35,
+        '25-34': 45,
+        '35-44': 12,
+        '45+': 3,
+      },
+      geo: [
+        { country: 'RU', share: 65 },
+        { country: 'UA', share: 15 },
+        { country: 'KZ', share: 10 },
+      ],
+    },
+    formats: [
+      {
+        id: 'f1',
+        channel_id: '1',
+        name: 'story',
+        duration_sec: 15,
+        rights: 'standard',
+        price: { value: 500, currency: 'USD', model: 'fixed' },
+        sla_days: 2,
+      },
+      {
+        id: 'f2',
+        channel_id: '1',
+        name: 'post',
+        rights: 'whitelist',
+        price: { value: 1500, currency: 'USD', model: 'fixed' },
+        sla_days: 3,
+      },
+      {
+        id: 'f3',
+        channel_id: '1',
+        name: 'video',
+        duration_sec: 60,
+        rights: 'ad_allowlist',
+        price: { value: 3000, currency: 'USD', model: 'fixed' },
+        sla_days: 5,
+      },
+    ],
+    brand_safety: {
+      verified: true,
+      last_check_at: '2025-01-15T10:00:00Z',
+    },
+    rating: {
+      score: 4.8,
+      reviews_count: 24,
+    },
+    created_at: '2024-06-01T10:00:00Z',
+    updated_at: '2025-01-15T10:00:00Z',
+  },
+  {
+    id: '2',
+    owner_user_id: 'creator-2',
+    platforms: ['youtube', 'telegram'],
+    handle: '@tech_review_alex',
+    title: 'Алекс - Обзоры гаджетов',
+    description: 'Честные обзоры смартфонов, ноутбуков и умной электроники. Помогаю выбрать технику.',
+    topics: ['tech'],
+    metrics: {
+      followers: 520000,
+      avg_views: 125000,
+      er: 3.8,
+    },
+    audience: {
+      gender: { male: 80, female: 20 },
+      age: {
+        '13-17': 15,
+        '18-24': 40,
+        '25-34': 30,
+        '35-44': 12,
+        '45+': 3,
+      },
+      geo: [
+        { country: 'RU', share: 70 },
+        { country: 'BY', share: 12 },
+        { country: 'KZ', share: 8 },
+      ],
+    },
+    formats: [
+      {
+        id: 'f4',
+        channel_id: '2',
+        name: 'video',
+        duration_sec: 180,
+        rights: 'whitelist',
+        price: { value: 5000, currency: 'USD', model: 'fixed' },
+        sla_days: 7,
+      },
+      {
+        id: 'f5',
+        channel_id: '2',
+        name: 'telegram_post',
+        rights: 'standard',
+        price: { value: 800, currency: 'USD', model: 'fixed' },
+        sla_days: 1,
+      },
+    ],
+    brand_safety: {
+      verified: true,
+      last_check_at: '2025-01-10T10:00:00Z',
+    },
+    rating: {
+      score: 4.9,
+      reviews_count: 42,
+    },
+    created_at: '2024-03-15T10:00:00Z',
+    updated_at: '2025-01-10T10:00:00Z',
+  },
+  {
+    id: '3',
+    owner_user_id: 'creator-3',
+    platforms: ['tiktok', 'instagram'],
+    handle: '@beauty_by_kate',
+    title: 'Катя - Красота и уход',
+    description: 'Бьюти-блогер, косметолог. Обзоры косметики, макияж, уход за кожей.',
+    topics: ['beauty', 'lifestyle'],
+    metrics: {
+      followers: 410000,
+      avg_views: 78000,
+      er: 5.1,
+    },
+    audience: {
+      gender: { male: 8, female: 92 },
+      age: {
+        '13-17': 12,
+        '18-24': 48,
+        '25-34': 32,
+        '35-44': 7,
+        '45+': 1,
+      },
+      geo: [
+        { country: 'RU', share: 60 },
+        { country: 'UA', share: 20 },
+        { country: 'KZ', share: 10 },
+      ],
+    },
+    formats: [
+      {
+        id: 'f6',
+        channel_id: '3',
+        name: 'short',
+        duration_sec: 30,
+        rights: 'standard',
+        price: { value: 1200, currency: 'USD', model: 'fixed' },
+        sla_days: 3,
+      },
+      {
+        id: 'f7',
+        channel_id: '3',
+        name: 'post',
+        rights: 'whitelist',
+        price: { value: 2000, currency: 'USD', model: 'fixed' },
+        sla_days: 4,
+      },
+    ],
+    brand_safety: {
+      verified: true,
+      last_check_at: '2025-01-18T10:00:00Z',
+    },
+    rating: {
+      score: 4.7,
+      reviews_count: 31,
+    },
+    created_at: '2024-08-10T10:00:00Z',
+    updated_at: '2025-01-18T10:00:00Z',
+  },
+]
+
+export const mockCases: Case[] = [
+  {
+    id: 'case-1',
+    client: 'FitShop - онлайн магазин спортпита',
+    objective: 'Увеличить продажи протеина через промокод на 30%',
+    placements: ['p1', 'p2', 'p3'],
+    results: {
+      impr: 850000,
+      clicks: 12500,
+      sales: 420,
+      cpa: 35,
+      roi: 3.2,
+    },
+    assets: [
+      { url: '/cases/fitshop-1.jpg', type: 'img' },
+      { url: '/cases/fitshop-report.pdf', type: 'pdf' },
+    ],
+    created_at: '2024-12-15T10:00:00Z',
+  },
+  {
+    id: 'case-2',
+    client: 'TechStore - электроника',
+    objective: 'Запуск нового смартфона, awareness и продажи',
+    placements: ['p4', 'p5'],
+    results: {
+      impr: 1200000,
+      clicks: 18000,
+      sales: 280,
+      cpa: 125,
+      roi: 2.8,
+    },
+    assets: [
+      { url: '/cases/techstore-1.jpg', type: 'img' },
+    ],
+    created_at: '2025-01-05T10:00:00Z',
+  },
+]
