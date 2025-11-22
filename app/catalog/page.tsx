@@ -10,7 +10,6 @@ export default async function CatalogPage() {
   const { data: channels, error } = await supabase
     .from('channels')
     .select('*')
-    .order('created_at', { ascending: false })
 
   if (error) {
     console.error('Error loading channels:', error)
