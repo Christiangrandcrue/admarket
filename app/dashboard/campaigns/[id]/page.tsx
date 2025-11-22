@@ -18,6 +18,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Eye,
+  BarChart3,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -302,6 +303,12 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
 
           {/* Action Buttons */}
           <div className="flex gap-2">
+            <Link href={`/dashboard/campaigns/${campaign.id}/analytics`}>
+              <Button variant="default" size="sm" className="gap-2">
+                <BarChart3 className="h-4 w-4" />
+                Аналитика
+              </Button>
+            </Link>
             {campaign.status === 'active' && (
               <Button
                 variant="outline"
