@@ -40,6 +40,8 @@ export default function CreateCampaignPage() {
   const [currentStep, setCurrentStep] = useState(1)
   const [draft, setDraft] = useState<CampaignDraft>(initialDraft)
   const [saving, setSaving] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const updateDraft = (updates: Partial<CampaignDraft>) => {
     setDraft((prev) => ({ ...prev, ...updates }))
@@ -61,24 +63,57 @@ export default function CreateCampaignPage() {
 
   const handleSaveDraft = async () => {
     setSaving(true)
+    setError(null)
     try {
-      // TODO: Save draft to database
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      console.log('Draft saved:', draft)
-    } catch (error) {
+      const response = await fetch('/api/campaigns/draft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(draft),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to save draft')
+      }
+
+      // Show success message (could be a toast notification)
+      console.log('Draft saved successfully:', data.campaign)
+      alert('Черновик сохранён успешно!')
+    } catch (error: any) {
       console.error('Error saving draft:', error)
+      setError(error.message)
+      alert(`Ошибка при сохранении: ${error.message}`)
     } finally {
       setSaving(false)
     }
   }
 
   const handleSubmit = async () => {
+    setSubmitting(true)
+    setError(null)
     try {
-      // TODO: Create campaign in database
-      console.log('Creating campaign:', draft)
-      router.push('/dashboard/campaigns')
-    } catch (error) {
+      const response = await fetch('/api/campaigns', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(draft),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create campaign')
+      }
+
+      console.log('Campaign created successfully:', data.campaign)
+      
+      // Redirect to campaigns list or success page
+      router.push('/dashboard/campaigns?success=true')
+    } catch (error: any) {
       console.error('Error creating campaign:', error)
+      setError(error.message)
+      alert(`Ошибка при создании кампании: ${error.message}`)
+      setSubmitting(false)
     }
   }
 
@@ -190,10 +225,10 @@ export default function CreateCampaignPage() {
             ) : (
               <Button
                 onClick={handleSubmit}
-                disabled={!canProceed()}
+                disabled={!canProceed() || submitting}
                 className="gap-2"
               >
-                Создать кампанию
+                {submitting ? 'Создание...' : 'Запустить кампанию'}
                 <ArrowRight className="h-4 w-4" />
               </Button>
             )}
