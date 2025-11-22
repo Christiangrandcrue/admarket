@@ -12,6 +12,13 @@ export default async function DashboardPage() {
 
   const userRole = user.user_metadata?.role || 'advertiser'
 
+  // Redirect based on role
+  if (userRole === 'creator') {
+    redirect('/dashboard/creator')
+  } else {
+    redirect('/dashboard/campaigns')
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
