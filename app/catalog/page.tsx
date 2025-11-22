@@ -4,14 +4,20 @@ import { CatalogClient } from '@/components/catalog/catalog-client'
 import { createClient } from '@/lib/supabase/server'
 
 export default async function CatalogPage() {
-  const supabase = await createClient()
+  // Загружаем каналы через API
+  const apiUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  let channels: any[] = []
   
-  // Загружаем каналы из Supabase
-  const { data: channels, error } = await supabase
-    .from('channels')
-    .select('*')
-
-  if (error) {
+  try {
+    const response = await fetch(`${apiUrl}/api/channels`, {
+      cache: 'no-store'
+    })
+    const result = await response.json()
+    
+    if (result.success && result.channels) {
+      channels = result.channels
+    }
+  } catch (error) {
     console.error('Error loading channels:', error)
   }
 
@@ -24,11 +30,11 @@ export default async function CatalogPage() {
           <div className="mb-8">
             <h1 className="mb-2 text-3xl font-bold">Каталог блогеров</h1>
             <p className="text-gray-600">
-              {channels?.length || 0} проверенных каналов для вашей рекламы
+              {channels.length} проверенных каналов для вашей рекламы
             </p>
           </div>
 
-          <CatalogClient channels={channels || []} />
+          <CatalogClient channels={channels} />
         </div>
       </main>
 
