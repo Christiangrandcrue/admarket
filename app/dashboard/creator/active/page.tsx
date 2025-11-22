@@ -165,9 +165,11 @@ export default function CreatorActivePage() {
                 </div>
 
                 <div className="flex gap-3 border-t border-gray-100 pt-4">
-                  <Button className="flex-1 gap-2">
-                    <Upload className="h-4 w-4" />
-                    Загрузить контент
+                  <Button className="flex-1 gap-2" asChild>
+                    <Link href={`/dashboard/creator/placements/${placement.id}/upload`}>
+                      <Upload className="h-4 w-4" />
+                      Загрузить контент
+                    </Link>
                   </Button>
                   {placement.campaign.landing_url && (
                     <Button variant="outline" asChild>
