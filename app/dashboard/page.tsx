@@ -23,7 +23,7 @@ export default async function DashboardPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="mb-2 text-3xl font-bold text-gray-900">
-          Добро пожаловать, {user.user_metadata?.full_name || user.email}!
+          Добро пожаловать, {user?.user_metadata?.full_name || user?.email || 'Пользователь'}!
         </h1>
         <p className="text-gray-600">
           {userRole === 'advertiser' 
@@ -44,7 +44,7 @@ export default async function DashboardPage() {
         <div className="rounded-2xl border border-gray-100 bg-white p-6">
           <div className="mb-2 text-sm font-medium text-gray-600">Email</div>
           <div className="text-lg font-semibold text-gray-900">
-            {user.email}
+            {user?.email || 'Не указан'}
           </div>
         </div>
 

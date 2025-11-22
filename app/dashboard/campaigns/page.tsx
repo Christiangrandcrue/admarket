@@ -69,12 +69,12 @@ export default function CampaignsPage() {
   }
 
   const getStatusBadge = (status: string) => {
-    const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }> = {
+    const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' | 'error' }> = {
       draft: { label: 'Черновик', variant: 'secondary' },
       pending: { label: 'Ожидает оплаты', variant: 'outline' },
       active: { label: 'Активна', variant: 'default' },
       completed: { label: 'Завершена', variant: 'outline' },
-      cancelled: { label: 'Отменена', variant: 'destructive' },
+      cancelled: { label: 'Отменена', variant: 'error' },
     }
 
     const config = statusConfig[status] || { label: status, variant: 'outline' }

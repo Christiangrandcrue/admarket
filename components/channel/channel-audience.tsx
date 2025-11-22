@@ -78,11 +78,14 @@ export function ChannelAudience({ channel }: ChannelAudienceProps) {
         )}
 
         {/* Geography Distribution */}
-        {Object.keys(geo).length > 0 && (
+        {(Array.isArray(geo) ? geo : Object.entries(geo)).length > 0 && (
           <div>
             <h3 className="mb-3 text-sm font-semibold text-gray-700">География</h3>
             <div className="space-y-2">
-              {Object.entries(geo).map(([country, percentage]) => (
+              {(Array.isArray(geo) 
+                ? geo.map((item: any) => [item.country, item.share] as [string, number])
+                : Object.entries(geo)
+              ).map(([country, percentage]) => (
                 <div key={country}>
                   <div className="mb-1 flex justify-between text-sm">
                     <span className="text-gray-600">{country}</span>

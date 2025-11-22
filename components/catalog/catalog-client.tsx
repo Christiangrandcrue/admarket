@@ -79,7 +79,7 @@ export function CatalogClient({ channels }: CatalogClientProps) {
 
       // Platform filter
       if (filters.platforms.length > 0) {
-        const channelPlatforms = channel.platforms || []
+        const channelPlatforms = (channel.platforms || []) as string[]
         const hasMatchingPlatform = filters.platforms.some(p => 
           channelPlatforms.includes(p)
         )
@@ -88,7 +88,7 @@ export function CatalogClient({ channels }: CatalogClientProps) {
 
       // Topic filter
       if (filters.topics.length > 0) {
-        const channelTopics = channel.topics || []
+        const channelTopics = (channel.topics || []) as string[]
         const hasMatchingTopic = filters.topics.some(t => 
           channelTopics.includes(t)
         )

@@ -41,9 +41,9 @@ export function ChannelAbout({ channel }: ChannelAboutProps) {
               </div>
             )}
 
-            {brandSafety.no_swearing !== undefined && (
+            {(brandSafety as any)?.no_swearing !== undefined && (
               <div className="flex items-center gap-2">
-                {brandSafety.no_swearing ? (
+                {(brandSafety as any).no_swearing ? (
                   <>
                     <CheckCircle2 className="h-5 w-5 text-green-600" />
                     <span className="text-sm text-gray-700">Без мата</span>
@@ -57,9 +57,9 @@ export function ChannelAbout({ channel }: ChannelAboutProps) {
               </div>
             )}
 
-            {brandSafety.no_politics !== undefined && (
+            {(brandSafety as any)?.no_politics !== undefined && (
               <div className="flex items-center gap-2">
-                {brandSafety.no_politics ? (
+                {(brandSafety as any).no_politics ? (
                   <>
                     <CheckCircle2 className="h-5 w-5 text-green-600" />
                     <span className="text-sm text-gray-700">Без политики</span>
@@ -73,9 +73,9 @@ export function ChannelAbout({ channel }: ChannelAboutProps) {
               </div>
             )}
 
-            {brandSafety.advertiser_friendly !== undefined && (
+            {(brandSafety as any)?.advertiser_friendly !== undefined && (
               <div className="flex items-center gap-2">
-                {brandSafety.advertiser_friendly ? (
+                {(brandSafety as any).advertiser_friendly ? (
                   <>
                     <CheckCircle2 className="h-5 w-5 text-green-600" />
                     <span className="text-sm text-gray-700">Безопасен для брендов</span>

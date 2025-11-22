@@ -126,8 +126,11 @@ export async function POST(request: NextRequest) {
               .eq('id', placement.channel_id)
               .single()
 
-            if (channel?.creator?.email) {
-              const creatorName = channel.creator.full_name || 'Блогер'
+            // Type assertion: creator should be a single object, not array
+            const creator = channel?.creator as unknown as { email: string; full_name: string } | null
+            
+            if (creator?.email) {
+              const creatorName = creator.full_name || 'Блогер'
               const advertiserName = user.email?.split('@')[0] || 'Рекламодатель'
               const requestUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/creator/placements/${placement.id}`
 
@@ -140,13 +143,13 @@ export async function POST(request: NextRequest) {
               })
 
               await sendEmail({
-                to: channel.creator.email,
+                to: creator.email,
                 subject: emailContent.subject,
                 html: emailContent.html,
                 text: emailContent.text,
               })
 
-              console.log(`✅ Placement request email sent to: ${channel.creator.email}`)
+              console.log(`✅ Placement request email sent to: ${creator.email}`)
             }
           } catch (emailError) {
             console.error('❌ Error sending placement request email:', emailError)
