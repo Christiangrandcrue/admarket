@@ -53,6 +53,12 @@ interface Placement {
   accepted_at: string | null
   rejection_reason: string | null
   created_at: string
+  content_url: string | null
+  content_description: string | null
+  content_status: string | null
+  content_uploaded_at: string | null
+  content_reviewed_at: string | null
+  content_review_notes: string | null
   channel?: {
     id: string
     title: string
@@ -144,6 +150,36 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
     } catch (error: any) {
       console.error('Error updating campaign:', error)
       alert(error.message || 'Ошибка обновления кампании')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleContentReview = async (placementId: string, action: 'approve' | 'request_revision', reviewNotes?: string) => {
+    setActionLoading(true)
+
+    try {
+      const response = await fetch(`/api/placements/${placementId}/review`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          action, 
+          review_notes: reviewNotes 
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to review content')
+      }
+
+      // Refresh campaign data
+      await fetchCampaignData(campaignId)
+      alert(data.message || 'Контент успешно проверен')
+    } catch (error: any) {
+      console.error('Error reviewing content:', error)
+      alert(error.message || 'Ошибка проверки контента')
     } finally {
       setActionLoading(false)
     }
@@ -445,44 +481,153 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
             {placements.map((placement) => (
               <div
                 key={placement.id}
-                className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-gray-100 bg-gray-50 p-4"
+                className="rounded-xl border border-gray-100 bg-gray-50 p-4"
               >
-                <div className="flex items-center gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 text-lg font-bold text-purple-600">
-                    {placement.channel?.title?.charAt(0) || '?'}
+                {/* Placement Header */}
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 text-lg font-bold text-purple-600">
+                      {placement.channel?.title?.charAt(0) || '?'}
+                    </div>
+
+                    <div>
+                      <div className="mb-1 flex items-center gap-2">
+                        <h3 className="font-semibold text-gray-900">{placement.channel_title}</h3>
+                        {placement.channel?.verified && (
+                          <CheckCircle2 className="h-4 w-4 text-blue-600" />
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 text-sm text-gray-600">
+                        <span>{placement.channel?.platform}</span>
+                        <span>•</span>
+                        <span>{formatNumber(placement.channel?.followers_count || 0)} подписчиков</span>
+                        <span>•</span>
+                        <span>ER: {placement.channel?.engagement_rate}%</span>
+                      </div>
+                    </div>
                   </div>
 
-                  <div>
-                    <div className="mb-1 flex items-center gap-2">
-                      <h3 className="font-semibold text-gray-900">{placement.channel_title}</h3>
-                      {placement.channel?.verified && (
-                        <CheckCircle2 className="h-4 w-4 text-blue-600" />
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <div className="mb-1 text-sm font-medium text-gray-600">Бюджет</div>
+                      <div className="font-bold text-gray-900">{formatCurrency(placement.budget)}</div>
+                    </div>
+
+                    {getPlacementStatusBadge(placement.status)}
+
+                    <Link href={`/channel/${placement.channel_id}`}>
+                      <Button variant="outline" size="sm">
+                        Открыть канал
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Content Section (if uploaded) */}
+                {placement.content_url && (
+                  <div className="mt-4 rounded-lg border border-gray-200 bg-white p-4">
+                    <div className="mb-3 flex items-center justify-between">
+                      <h4 className="font-semibold text-gray-900">Загруженный контент</h4>
+                      {placement.content_status === 'pending_review' && (
+                        <Badge variant="warning">Ожидает проверки</Badge>
+                      )}
+                      {placement.content_status === 'approved' && (
+                        <Badge variant="success">Одобрено</Badge>
+                      )}
+                      {placement.content_status === 'revision_requested' && (
+                        <Badge variant="error">Требуются изменения</Badge>
                       )}
                     </div>
-                    <div className="flex items-center gap-3 text-sm text-gray-600">
-                      <span>{placement.channel?.platform}</span>
-                      <span>•</span>
-                      <span>{formatNumber(placement.channel?.followers_count || 0)} подписчиков</span>
-                      <span>•</span>
-                      <span>ER: {placement.channel?.engagement_rate}%</span>
+
+                    <div className="space-y-3">
+                      <div>
+                        <div className="mb-1 text-xs font-medium text-gray-600">Ссылка на контент</div>
+                        <a
+                          href={placement.content_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 text-sm text-purple-600 hover:text-purple-700"
+                        >
+                          {placement.content_url}
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </div>
+
+                      {placement.content_description && (
+                        <div>
+                          <div className="mb-1 text-xs font-medium text-gray-600">Описание от блогера</div>
+                          <p className="text-sm text-gray-700">{placement.content_description}</p>
+                        </div>
+                      )}
+
+                      {placement.content_uploaded_at && (
+                        <div>
+                          <div className="mb-1 text-xs font-medium text-gray-600">Загружено</div>
+                          <p className="text-sm text-gray-700">{formatDate(placement.content_uploaded_at)}</p>
+                        </div>
+                      )}
+
+                      {placement.content_review_notes && (
+                        <div>
+                          <div className="mb-1 text-xs font-medium text-gray-600">Ваш комментарий</div>
+                          <p className="text-sm text-gray-700">{placement.content_review_notes}</p>
+                        </div>
+                      )}
+
+                      {/* Review Actions (only for pending_review status) */}
+                      {placement.content_status === 'pending_review' && (
+                        <div className="flex gap-2 border-t border-gray-100 pt-3">
+                          <Button
+                            size="sm"
+                            className="flex-1 gap-2"
+                            onClick={() => {
+                              if (confirm('Вы уверены, что хотите одобрить этот контент?')) {
+                                handleContentReview(placement.id, 'approve')
+                              }
+                            }}
+                            disabled={actionLoading}
+                          >
+                            <CheckCircle2 className="h-4 w-4" />
+                            Одобрить
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1 gap-2"
+                            onClick={() => {
+                              const notes = prompt('Укажите, какие изменения необходимы:')
+                              if (notes !== null && notes.trim()) {
+                                handleContentReview(placement.id, 'request_revision', notes)
+                              }
+                            }}
+                            disabled={actionLoading}
+                          >
+                            <AlertCircle className="h-4 w-4" />
+                            Запросить изменения
+                          </Button>
+                        </div>
+                      )}
+
+                      {/* Revision Requested - Show Request Revision Again */}
+                      {placement.content_status === 'revision_requested' && (
+                        <div className="rounded-lg bg-yellow-50 border border-yellow-200 p-3">
+                          <p className="text-sm text-yellow-900">
+                            Вы запросили изменения. Блогер получил уведомление и скоро загрузит обновлённую версию.
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Approved - Show Success */}
+                      {placement.content_status === 'approved' && (
+                        <div className="rounded-lg bg-green-50 border border-green-200 p-3">
+                          <p className="text-sm text-green-900">
+                            ✅ Контент одобрен. Блогер может публиковать его на своём канале.
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <div className="mb-1 text-sm font-medium text-gray-600">Бюджет</div>
-                    <div className="font-bold text-gray-900">{formatCurrency(placement.budget)}</div>
-                  </div>
-
-                  {getPlacementStatusBadge(placement.status)}
-
-                  <Link href={`/channel/${placement.channel_id}`}>
-                    <Button variant="outline" size="sm">
-                      Открыть канал
-                    </Button>
-                  </Link>
-                </div>
+                )}
               </div>
             ))}
           </div>
