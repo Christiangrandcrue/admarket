@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Button } from '@/components/ui/button'
+import { HeaderAuth } from './header-auth'
 import { Menu, X } from 'lucide-react'
 import { useState } from 'react'
 
@@ -33,12 +33,7 @@ export function Header() {
         </div>
 
         <div className="hidden items-center gap-3 md:flex">
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/auth/login">Войти</Link>
-          </Button>
-          <Button size="sm" asChild>
-            <Link href="/auth/register">Начать</Link>
-          </Button>
+          <HeaderAuth />
         </div>
 
         <button
