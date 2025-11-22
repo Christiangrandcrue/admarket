@@ -62,6 +62,23 @@ export default function RegisterPage() {
         if (profileError && profileError.code !== '23505') { // Ignore duplicate key error
           console.error('Profile creation error:', profileError)
         }
+
+        // Send welcome email (fire and forget - don't block registration)
+        try {
+          const welcomeResponse = await fetch('/api/auth/welcome', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          })
+
+          if (!welcomeResponse.ok) {
+            console.warn('Failed to send welcome email (non-blocking)')
+          }
+        } catch (emailError) {
+          // Don't block registration if welcome email fails
+          console.warn('Welcome email error (non-blocking):', emailError)
+        }
       }
 
       // Redirect to dashboard or verification page

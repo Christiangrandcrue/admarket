@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -37,7 +37,7 @@ interface Campaign {
   creator_payout?: number
 }
 
-export default function CampaignsPage() {
+function CampaignsContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
@@ -327,5 +327,13 @@ export default function CampaignsPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function CampaignsPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center">Загрузка...</div>}>
+      <CampaignsContent />
+    </Suspense>
   )
 }

@@ -400,3 +400,291 @@ export function newPlacementRequestEmail({
 
   return { subject, html, text }
 }
+
+// ============================================
+// WELCOME EMAILS
+// ============================================
+
+interface WelcomeAdvertiserEmailProps {
+  userName: string
+  userEmail: string
+  dashboardUrl: string
+}
+
+export function welcomeAdvertiserEmail({
+  userName,
+  userEmail,
+  dashboardUrl,
+}: WelcomeAdvertiserEmailProps) {
+  const subject = `🎉 Добро пожаловать в AdMarket, ${userName}!`
+  
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${subject}</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f3f4f6;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f3f4f6; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%); padding: 40px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: bold;">AdMarket</h1>
+              <p style="margin: 12px 0 0; color: rgba(255,255,255,0.9); font-size: 16px;">
+                Платформа инфлюенс-маркетинга
+              </p>
+            </td>
+          </tr>
+          
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px;">
+              <div style="text-align: center; margin-bottom: 30px;">
+                <div style="display: inline-block; width: 80px; height: 80px; background-color: #fef3c7; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                  <span style="font-size: 40px;">🎉</span>
+                </div>
+              </div>
+              
+              <h2 style="margin: 0 0 20px; color: #111827; font-size: 24px; font-weight: bold; text-align: center;">
+                Добро пожаловать, ${userName}!
+              </h2>
+              
+              <p style="margin: 0 0 16px; color: #374151; font-size: 16px; line-height: 1.6;">
+                Рады видеть вас на AdMarket — платформе, где рекламодатели находят идеальных блогеров для своих кампаний.
+              </p>
+              
+              <p style="margin: 0 0 24px; color: #374151; font-size: 16px; line-height: 1.6;">
+                Вы зарегистрированы как <strong>рекламодатель</strong> с email: <strong>${userEmail}</strong>
+              </p>
+              
+              <div style="background-color: #f0fdf4; border-radius: 8px; padding: 24px; margin: 24px 0;">
+                <h3 style="margin: 0 0 16px; color: #166534; font-size: 18px; font-weight: bold;">
+                  🚀 Как начать работу:
+                </h3>
+                <ul style="margin: 0; padding-left: 24px; color: #166534; font-size: 15px; line-height: 1.8;">
+                  <li><strong>Создайте кампанию</strong> — опишите ваш продукт, цели и бриф</li>
+                  <li><strong>Найдите блогеров</strong> — используйте каталог с фильтрами по охвату и нишам</li>
+                  <li><strong>Отправьте заявки</strong> — выберите подходящие каналы</li>
+                  <li><strong>Контролируйте процесс</strong> — отслеживайте статусы и проверяйте контент</li>
+                  <li><strong>Анализируйте результаты</strong> — получайте детальную аналитику по каждой кампании</li>
+                </ul>
+              </div>
+              
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${dashboardUrl}" style="display: inline-block; background-color: #7c3aed; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                  Создать первую кампанию
+                </a>
+              </div>
+              
+              <div style="background-color: #eff6ff; border-radius: 8px; padding: 20px; margin-top: 30px;">
+                <p style="margin: 0 0 12px; color: #1e3a8a; font-size: 14px; font-weight: bold;">
+                  💡 Преимущества AdMarket:
+                </p>
+                <p style="margin: 0; color: #1e40af; font-size: 14px; line-height: 1.6;">
+                  ✓ Проверенные блогеры с реальной статистикой<br>
+                  ✓ Защита сделок через эскроу-систему<br>
+                  ✓ Прозрачная аналитика по всем кампаниям<br>
+                  ✓ Поддержка 5 платформ: TikTok, YouTube, Instagram, Telegram, VK
+                </p>
+              </div>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f9fafb; padding: 30px; text-align: center; border-top: 1px solid #e5e7eb;">
+              <p style="margin: 0 0 8px; color: #6b7280; font-size: 14px;">
+                Остались вопросы? Свяжитесь с нами:<br>
+                <strong>support@admarket.com</strong>
+              </p>
+              <p style="margin: 16px 0 0; color: #9ca3af; font-size: 12px;">
+                С уважением, команда AdMarket
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `.trim()
+
+  const text = `
+Добро пожаловать в AdMarket, ${userName}!
+
+Рады видеть вас на AdMarket — платформе, где рекламодатели находят идеальных блогеров для своих кампаний.
+
+Вы зарегистрированы как рекламодатель с email: ${userEmail}
+
+🚀 Как начать работу:
+
+• Создайте кампанию — опишите ваш продукт, цели и бриф
+• Найдите блогеров — используйте каталог с фильтрами по охвату и нишам
+• Отправьте заявки — выберите подходящие каналы
+• Контролируйте процесс — отслеживайте статусы и проверяйте контент
+• Анализируйте результаты — получайте детальную аналитику по каждой кампании
+
+Создать первую кампанию: ${dashboardUrl}
+
+💡 Преимущества AdMarket:
+✓ Проверенные блогеры с реальной статистикой
+✓ Защита сделок через эскроу-систему
+✓ Прозрачная аналитика по всем кампаниям
+✓ Поддержка 5 платформ: TikTok, YouTube, Instagram, Telegram, VK
+
+Остались вопросы? Свяжитесь с нами: support@admarket.com
+
+С уважением, команда AdMarket
+  `.trim()
+
+  return { subject, html, text }
+}
+
+interface WelcomeCreatorEmailProps {
+  userName: string
+  userEmail: string
+  dashboardUrl: string
+}
+
+export function welcomeCreatorEmail({
+  userName,
+  userEmail,
+  dashboardUrl,
+}: WelcomeCreatorEmailProps) {
+  const subject = `👋 Добро пожаловать в AdMarket, ${userName}!`
+  
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${subject}</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f3f4f6;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f3f4f6; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%); padding: 40px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: bold;">AdMarket</h1>
+              <p style="margin: 12px 0 0; color: rgba(255,255,255,0.9); font-size: 16px;">
+                Платформа инфлюенс-маркетинга
+              </p>
+            </td>
+          </tr>
+          
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px;">
+              <div style="text-align: center; margin-bottom: 30px;">
+                <div style="display: inline-block; width: 80px; height: 80px; background-color: #e0e7ff; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                  <span style="font-size: 40px;">👋</span>
+                </div>
+              </div>
+              
+              <h2 style="margin: 0 0 20px; color: #111827; font-size: 24px; font-weight: bold; text-align: center;">
+                Добро пожаловать, ${userName}!
+              </h2>
+              
+              <p style="margin: 0 0 16px; color: #374151; font-size: 16px; line-height: 1.6;">
+                Рады видеть вас на AdMarket — платформе, где блогеры монетизируют свою аудиторию через качественные рекламные интеграции.
+              </p>
+              
+              <p style="margin: 0 0 24px; color: #374151; font-size: 16px; line-height: 1.6;">
+                Вы зарегистрированы как <strong>блогер/креатор</strong> с email: <strong>${userEmail}</strong>
+              </p>
+              
+              <div style="background-color: #fef3c7; border-radius: 8px; padding: 24px; margin: 24px 0;">
+                <h3 style="margin: 0 0 16px; color: #92400e; font-size: 18px; font-weight: bold;">
+                  🎬 Как начать зарабатывать:
+                </h3>
+                <ul style="margin: 0; padding-left: 24px; color: #92400e; font-size: 15px; line-height: 1.8;">
+                  <li><strong>Добавьте каналы</strong> — подключите свои аккаунты на TikTok, YouTube, Instagram, Telegram или VK</li>
+                  <li><strong>Заполните статистику</strong> — укажите охват, вовлечённость и прайс</li>
+                  <li><strong>Получайте заявки</strong> — рекламодатели будут находить вас через каталог</li>
+                  <li><strong>Создавайте контент</strong> — работайте по брифам и загружайте материалы</li>
+                  <li><strong>Получайте вознаграждение</strong> — средства переводятся автоматически после одобрения контента</li>
+                </ul>
+              </div>
+              
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${dashboardUrl}" style="display: inline-block; background-color: #7c3aed; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                  Добавить первый канал
+                </a>
+              </div>
+              
+              <div style="background-color: #f0fdf4; border-radius: 8px; padding: 20px; margin-top: 30px;">
+                <p style="margin: 0 0 12px; color: #166534; font-size: 14px; font-weight: bold;">
+                  💰 Преимущества AdMarket:
+                </p>
+                <p style="margin: 0; color: #166534; font-size: 14px; line-height: 1.6;">
+                  ✓ Прямой доступ к проверенным рекламодателям<br>
+                  ✓ Гарантия оплаты через эскроу-систему<br>
+                  ✓ Прозрачные условия работы с брифами<br>
+                  ✓ Никаких комиссий за получение заявок<br>
+                  ✓ Поддержка 5 платформ
+                </p>
+              </div>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f9fafb; padding: 30px; text-align: center; border-top: 1px solid #e5e7eb;">
+              <p style="margin: 0 0 8px; color: #6b7280; font-size: 14px;">
+                Остались вопросы? Свяжитесь с нами:<br>
+                <strong>support@admarket.com</strong>
+              </p>
+              <p style="margin: 16px 0 0; color: #9ca3af; font-size: 12px;">
+                С уважением, команда AdMarket
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `.trim()
+
+  const text = `
+Добро пожаловать в AdMarket, ${userName}!
+
+Рады видеть вас на AdMarket — платформе, где блогеры монетизируют свою аудиторию через качественные рекламные интеграции.
+
+Вы зарегистрированы как блогер/креатор с email: ${userEmail}
+
+🎬 Как начать зарабатывать:
+
+• Добавьте каналы — подключите свои аккаунты на TikTok, YouTube, Instagram, Telegram или VK
+• Заполните статистику — укажите охват, вовлечённость и прайс
+• Получайте заявки — рекламодатели будут находить вас через каталог
+• Создавайте контент — работайте по брифам и загружайте материалы
+• Получайте вознаграждение — средства переводятся автоматически после одобрения контента
+
+Добавить первый канал: ${dashboardUrl}
+
+💰 Преимущества AdMarket:
+✓ Прямой доступ к проверенным рекламодателям
+✓ Гарантия оплаты через эскроу-систему
+✓ Прозрачные условия работы с брифами
+✓ Никаких комиссий за получение заявок
+✓ Поддержка 5 платформ
+
+Остались вопросы? Свяжитесь с нами: support@admarket.com
+
+С уважением, команда AdMarket
+  `.trim()
+
+  return { subject, html, text }
+}

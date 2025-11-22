@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { CampaignProgress } from '@/components/campaign/campaign-progress'
@@ -32,7 +32,7 @@ const initialDraft: CampaignDraft = {
   agreedToTerms: false,
 }
 
-export default function CreateCampaignPage() {
+function CreateCampaignContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const preselectedChannelId = searchParams.get('channel')
@@ -236,5 +236,13 @@ export default function CreateCampaignPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function CreateCampaignPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center">Загрузка...</div>}>
+      <CreateCampaignContent />
+    </Suspense>
   )
 }
