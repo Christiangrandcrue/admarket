@@ -84,8 +84,8 @@ export function ChannelAudience({ channel }: ChannelAudienceProps) {
             <div className="space-y-2">
               {(Array.isArray(geo) 
                 ? geo.map((item: any) => [item.country, item.share] as [string, number])
-                : Object.entries(geo)
-              ).map(([country, percentage]) => (
+                : Object.entries(geo) as [string, number][]
+              ).map(([country, percentage]: [string, number]) => (
                 <div key={country}>
                   <div className="mb-1 flex justify-between text-sm">
                     <span className="text-gray-600">{country}</span>

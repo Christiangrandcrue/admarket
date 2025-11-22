@@ -103,10 +103,10 @@ export function ChannelHeader({ channel }: ChannelHeaderProps) {
         {/* Right Side - Actions */}
         <div className="flex flex-col gap-3 md:items-end">
           <div className="flex gap-2">
-            <Button variant="outline" size="icon">
+            <Button variant="outline" size="sm">
               <Heart className="h-5 w-5" />
             </Button>
-            <Button variant="outline" size="icon">
+            <Button variant="outline" size="sm">
               <Share2 className="h-5 w-5" />
             </Button>
           </div>

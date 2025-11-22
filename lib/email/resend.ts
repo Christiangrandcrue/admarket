@@ -39,7 +39,7 @@ export async function sendEmail({
   }
 
   try {
-    const data = await resend.emails.send({
+    const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
       to: Array.isArray(to) ? to : [to],
       subject,
@@ -47,9 +47,13 @@ export async function sendEmail({
       text,
     })
 
-    console.log('✅ Email sent successfully:', { to, subject, id: data.id })
+    if (error) {
+      throw error
+    }
+
+    console.log('✅ Email sent successfully:', { to, subject, id: data?.id })
     
-    return { success: true, id: data.id, provider: 'resend' }
+    return { success: true, id: data?.id || 'unknown', provider: 'resend' }
   } catch (error: any) {
     console.error('❌ Error sending email:', error)
     

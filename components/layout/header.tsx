@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { HeaderAuth } from './header-auth'
 import { Menu, X } from 'lucide-react'
 import { useState } from 'react'
+import { Button } from '@/components/ui/button'
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
