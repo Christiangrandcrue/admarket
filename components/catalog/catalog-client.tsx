@@ -61,7 +61,7 @@ export function CatalogClient({ channels }: CatalogClientProps) {
       {/* Search */}
       <div className="relative">
         <Search
-          className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+          className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"
           size={20}
         />
         <Input
@@ -91,8 +91,8 @@ export function CatalogClient({ channels }: CatalogClientProps) {
                       </span>
                     ))}
                   </div>
-                  <h3 className="mb-1 text-lg font-bold">{channel.title}</h3>
-                  <p className="text-sm text-gray-500">{channel.handle}</p>
+                  <h3 className="mb-1 text-lg font-bold text-gray-900">{channel.title}</h3>
+                  <p className="text-sm text-gray-700">{channel.handle}</p>
                 </div>
                 <button className="rounded-lg p-2 hover:bg-gray-100">
                   <Heart className="h-5 w-5" />
@@ -109,36 +109,36 @@ export function CatalogClient({ channels }: CatalogClientProps) {
             </div>
 
             {/* Description */}
-            <p className="mb-4 line-clamp-2 text-sm text-gray-600">
+            <p className="mb-4 line-clamp-2 text-sm text-gray-800">
               {channel.description}
             </p>
 
             {/* Metrics */}
             <div className="mb-4 grid grid-cols-3 gap-4 rounded-xl bg-gray-50 p-4">
               <div>
-                <div className="mb-1 flex items-center gap-1 text-xs text-gray-500">
+                <div className="mb-1 flex items-center gap-1 text-xs text-gray-600">
                   <Users className="h-3 w-3" />
                   Подписчики
                 </div>
-                <div className="font-semibold">
+                <div className="font-semibold text-gray-900">
                   {channel.metrics && formatNumber(channel.metrics.followers || 0)}
                 </div>
               </div>
               <div>
-                <div className="mb-1 flex items-center gap-1 text-xs text-gray-500">
+                <div className="mb-1 flex items-center gap-1 text-xs text-gray-600">
                   <Eye className="h-3 w-3" />
                   Просмотры
                 </div>
-                <div className="font-semibold">
+                <div className="font-semibold text-gray-900">
                   {channel.metrics && formatNumber(channel.metrics.avg_views || 0)}
                 </div>
               </div>
               <div>
-                <div className="mb-1 flex items-center gap-1 text-xs text-gray-500">
+                <div className="mb-1 flex items-center gap-1 text-xs text-gray-600">
                   <TrendingUp className="h-3 w-3" />
                   ER
                 </div>
-                <div className="font-semibold">{channel.metrics ? channel.metrics.er : 0}%</div>
+                <div className="font-semibold text-gray-900">{channel.metrics ? channel.metrics.er : 0}%</div>
               </div>
             </div>
 
@@ -173,7 +173,7 @@ export function CatalogClient({ channels }: CatalogClientProps) {
       {/* Empty State */}
       {filteredChannels.length === 0 && (
         <div className="py-20 text-center">
-          <p className="mb-4 text-lg text-gray-600">
+          <p className="mb-4 text-lg text-gray-800">
             Ничего не найдено по запросу &quot;{searchQuery}&quot;
           </p>
           <Button variant="outline" onClick={() => setSearchQuery('')}>
