@@ -202,40 +202,85 @@ webapp/
     - История транзакций с датами
 - [x] **Email Notifications** (Resend):
   - `lib/email/resend.ts` — email клиент с graceful fallback
-  - `lib/email/templates.ts` — 3 HTML-шаблона с брендингом
-  - **Placement Accepted** — уведомление рекламодателю о принятии заявки
-  - **Placement Rejected** — уведомление рекламодателю об отклонении заявки
-  - **New Placement Request** — уведомление блогеру о новой заявке
+  - `lib/email/templates.ts` — 5 HTML-шаблонов с брендингом:
+    - **Placement Accepted** — уведомление рекламодателю о принятии заявки
+    - **Placement Rejected** — уведомление рекламодателю об отклонении заявки
+    - **New Placement Request** — уведомление блогеру о новой заявке
+    - **Welcome Advertiser** — приветственный email для рекламодателей (🎉)
+    - **Welcome Creator** — приветственный email для блогеров (👋)
   - Интеграция в `PATCH /api/creator/placements/[id]`
   - Интеграция в `POST /api/campaigns` для уведомления блогеров
+  - Интеграция в `/auth/register` для welcome emails
+  - **Content Upload Notifications**:
+    - Email advertiser-у о загруженном контенте (ожидает проверки)
+  - **Content Review Notifications**:
+    - Email creator-у об одобрении контента (✅)
+    - Email creator-у о запросе изменений (🔄)
 
 ### 🚧 В разработке
-- [ ] ЛК Рекламодателя:
-  - Детальная страница кампании (/dashboard/campaigns/[id])
+- [ ] ЛК Рекламодателя (улучшения):
   - Редактирование черновиков кампаний
-  - Дашборд аналитики (графики метрик, конверсии, ROI)
   - Интеграции (GA4/AppsFlyer/Shopify)
 - [ ] ЛК Автора (улучшения):
-  - Загрузка контента для размещений
   - Верификация каналов
 - [ ] Email Notifications (дополнительно):
-  - Welcome email при регистрации
   - Напоминания о просроченных заявках
   - Уведомления о завершении кампании
+  - Content revision request reminders
 - [ ] In-app Notifications система
 - [ ] Stripe Connect для эскроу-платежей
 - [ ] Экспорт отчётов в PDF
 - [ ] Админ-панель
 
+- [x] **Детальная страница кампании** (`/dashboard/campaigns/[id]`):
+  - `GET /api/campaigns/[id]` — получение детальных данных кампании с placements
+  - Полная информация о кампании (цель, даты, бюджет, бриф)
+  - Статистика (всего размещений, pending/accepted/rejected/completed)
+  - Список всех placements с детальной информацией по каждому каналу
+  - Actions: pause/resume/cancel кампании через `PATCH /api/campaigns/[id]`
+  - Редирект на страницу в случае unauthorized доступа
+
+- [x] **Content Upload System** (creator → advertiser):
+  - `/dashboard/creator/placements/[id]/upload` — форма загрузки контента
+  - `POST /api/creator/placements/[id]/upload` — endpoint для загрузки контента
+  - Миграция БД: `003_add_content_fields_to_placements.sql`
+  - Email notification advertiser-у при загрузке контента
+  - Валидация URL и статуса placement
+  - Отображение информации о кампании на странице загрузки
+
+- [x] **Content Review System** (advertiser):
+  - Inline content review в `/dashboard/campaigns/[id]`
+  - Approve/Request Revision actions с confirm dialogs
+  - `POST /api/placements/[id]/review` — endpoint для review контента
+  - Email notifications (одобрение контента / запрос изменений)
+  - Статусы: pending_review → approved / revision_requested
+  - Review notes для запросов на изменения
+
+- [x] **Analytics Dashboard** (`/dashboard/campaigns/[id]/analytics`):
+  - `GET /api/campaigns/[id]/analytics` — endpoint с mock данными
+  - Overview cards (impressions, clicks, conversions, reach)
+  - ROI Card с градиентом (budget, revenue, profit, ROI%)
+  - LineChart (Recharts) с daily metrics (30 дней)
+  - Performance Table по каналам с индивидуальными метриками
+  - Mock data generation на основе approved placements
+  - Готово к интеграции с реальной таблицей analytics_events
+
+- [x] **Welcome Email на регистрацию**:
+  - `welcomeAdvertiserEmail()` — email для рекламодателей
+  - `welcomeCreatorEmail()` — email для блогеров
+  - `POST /api/auth/welcome` — endpoint для отправки welcome email
+  - Интеграция в `/auth/register` (fire-and-forget)
+  - Role-based templates с разным onboarding контентом
+  - Дизайн: purple gradient, circular badges, responsive 600px
+
 ### 📋 Следующие шаги
-1. **Детальная страница кампании**:
-   - Просмотр всех данных кампании
-   - Список placements с метриками
-   - Кнопки действий (пауза/возобновить/отменить)
-2. **Stripe Connect интеграция** для эскроу-платежей
-3. **Дашборд аналитики** с графиками метрик
-4. **ЛК блогера** (creator dashboard)
-5. **Админ-панель** модерации
+1. **Stripe Connect интеграция** для эскроу-платежей
+2. **In-app Notifications** система
+3. **Email Notifications** (дополнительно):
+   - Напоминания о просроченных заявках
+   - Уведомления о завершении кампании
+   - Content revision request reminders
+4. **Админ-панель** модерации
 
 ## Установка и запуск
 
@@ -360,11 +405,47 @@ npx wrangler pages deploy out --project-name=admarket
 
 ---
 
-**Последнее обновление**: 22 ноября 2025
-**Версия**: 0.4.0 (MVP — Full Two-Sided Marketplace)
+**Последнее обновление**: 23 ноября 2025
+**Версия**: 0.5.0 (MVP — Email Notifications & Analytics)
 **Статус**: 🚧 В активной разработке
 
-### Недавние изменения (22.11.2025)
+### Недавние изменения (23.11.2025)
+
+**Welcome Email System** (commit 905b829):
+- ✅ Созданы welcomeAdvertiserEmail() и welcomeCreatorEmail() templates
+- ✅ Добавлен POST /api/auth/welcome endpoint
+- ✅ Интегрирована отправка welcome email в регистрацию (fire-and-forget)
+- ✅ Исправлены Suspense boundary warnings в /campaign/create и /dashboard/campaigns
+- ✅ Исправлена Button variant type error (default → primary)
+- ✅ Email notifications работают в console.log mode без API key
+
+**Analytics Dashboard** (commit предыдущий):
+- ✅ Создан /dashboard/campaigns/[id]/analytics с Recharts визуализацией
+- ✅ Mock data generation на основе approved placements
+- ✅ ROI calculation с assumed avg order value (1000 RUB)
+- ✅ Daily performance LineChart (30 дней)
+- ✅ Performance table по каналам с индивидуальными метриками
+- ✅ Готово к интеграции с реальной analytics_events таблицей
+
+**Content Review System** (commit предыдущий):
+- ✅ Inline content review в детальной странице кампании
+- ✅ Approve/Request Revision actions с email notifications
+- ✅ POST /api/placements/[id]/review endpoint
+- ✅ Email templates для одобрения и запроса изменений
+
+**Content Upload System** (commit предыдущий):
+- ✅ Форма загрузки контента для creator
+- ✅ POST /api/creator/placements/[id]/upload endpoint
+- ✅ Email notification advertiser-у о новом контенте
+- ✅ Database migration с полями content_url, content_status, etc.
+
+**Campaign Details Page** (commit предыдущий):
+- ✅ Детальная страница кампании /dashboard/campaigns/[id]
+- ✅ GET /api/campaigns/[id] с полными данными
+- ✅ Статистика по placements (pending/accepted/rejected/completed)
+- ✅ Actions: pause/resume/cancel через PATCH /api/campaigns/[id]
+
+**Предыдущие изменения (22.11.2025)**
 
 **Creator Dashboard** (commit 55ef238):
 - ✅ Создан полный ЛК блогера (/dashboard/creator)
@@ -405,7 +486,7 @@ npx wrangler pages deploy out --project-name=admarket
 - ✅ Исправлены ошибки null safety в каталоге
 - ✅ Добавлена поддержка Next.js 15 async params API
 - ✅ Улучшена контрастность текста в каталоге
-�зована демография аудитории с визуализацией
+�зована демография аудитории с визуализацией
 - ✅ Добавлен прайс по типам интеграций
 - ✅ Исправлены ошибки null safety в каталоге
 - ✅ Добавлена поддержка Next.js 15 async params API
