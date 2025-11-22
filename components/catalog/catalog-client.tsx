@@ -85,7 +85,7 @@ export function CatalogClient({ channels }: CatalogClientProps) {
               <div className="mb-2 flex items-start justify-between">
                 <div className="flex-1">
                   <div className="mb-2 flex items-center gap-2">
-                    {channel.platforms.map((platform) => (
+                    {channel.platforms && Array.isArray(channel.platforms) && channel.platforms.map((platform: string) => (
                       <span key={platform} className="text-2xl">
                         {platformIcons[platform] || '📱'}
                       </span>
@@ -100,7 +100,7 @@ export function CatalogClient({ channels }: CatalogClientProps) {
               </div>
 
               <div className="flex flex-wrap gap-2">
-                {channel.topics.map((topic) => (
+                {channel.topics && Array.isArray(channel.topics) && channel.topics.map((topic: string) => (
                   <Badge key={topic} variant="secondary">
                     {topicLabels[topic] || topic}
                   </Badge>
@@ -121,7 +121,7 @@ export function CatalogClient({ channels }: CatalogClientProps) {
                   Подписчики
                 </div>
                 <div className="font-semibold">
-                  {formatNumber(channel.metrics.followers)}
+                  {channel.metrics && formatNumber(channel.metrics.followers || 0)}
                 </div>
               </div>
               <div>
@@ -130,7 +130,7 @@ export function CatalogClient({ channels }: CatalogClientProps) {
                   Просмотры
                 </div>
                 <div className="font-semibold">
-                  {formatNumber(channel.metrics.avg_views)}
+                  {channel.metrics && formatNumber(channel.metrics.avg_views || 0)}
                 </div>
               </div>
               <div>
@@ -138,19 +138,19 @@ export function CatalogClient({ channels }: CatalogClientProps) {
                   <TrendingUp className="h-3 w-3" />
                   ER
                 </div>
-                <div className="font-semibold">{channel.metrics.er}%</div>
+                <div className="font-semibold">{channel.metrics ? channel.metrics.er : 0}%</div>
               </div>
             </div>
 
             {/* Badges */}
             <div className="mb-4 flex flex-wrap gap-2">
-              {channel.brand_safety.verified && (
+              {channel.brand_safety && channel.brand_safety.verified && (
                 <Badge variant="success" className="gap-1">
                   <CheckCircle2 className="h-3 w-3" />
                   Верифицирован
                 </Badge>
               )}
-              {channel.rating.score >= 4.5 && (
+              {channel.rating && channel.rating.score >= 4.5 && (
                 <Badge variant="secondary">
                   ⭐ {channel.rating.score}
                 </Badge>
