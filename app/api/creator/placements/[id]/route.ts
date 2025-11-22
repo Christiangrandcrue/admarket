@@ -147,16 +147,23 @@ export async function PATCH(
 
         console.log(`✅ Email sent to advertiser: ${advertiser.email}`)
 
-        // TODO: Create in-app notification record
-        // await supabase.from('notifications').insert({
-        //   user_id: campaignData.advertiser_id,
-        //   type: action === 'accept' ? 'placement_accepted' : 'placement_rejected',
-        //   title: action === 'accept' ? 'Заявка принята' : 'Заявка отклонена',
-        //   message: notificationMessage,
-        //   metadata: { placement_id: id, campaign_id: campaignData.id },
-        // })
+        // Create in-app notification
+        const { createNotification } = await import('@/lib/notifications/create-notification')
+        await createNotification({
+          userId: campaignData.advertiser_id,
+          type: action === 'accept' ? 'placement_accepted' : 'placement_rejected',
+          title: action === 'accept' ? 'Заявка принята' : 'Заявка отклонена',
+          message: action === 'accept'
+            ? `Блогер ${placement.channel_title} принял вашу заявку по кампании "${campaignData.title}"`
+            : `Блогер ${placement.channel_title} отклонил вашу заявку по кампании "${campaignData.title}"${rejection_reason ? `: ${rejection_reason}` : ''}`,
+          campaignId: campaignData.id,
+          placementId: id,
+          actionUrl: `/dashboard/campaigns/${campaignData.id}`,
+        })
+
+        console.log(`✅ Notification created for advertiser`)
       } catch (notifError) {
-        console.error('❌ Error sending email notification:', notifError)
+        console.error('❌ Error sending notification:', notifError)
         // Don't fail the request if notification fails
       }
     }

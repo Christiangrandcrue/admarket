@@ -3,6 +3,34 @@
 export type UserRole = 'advertiser' | 'creator' | 'admin'
 export type KycStatus = 'pending' | 'verified' | 'rejected'
 
+// Notification types
+export type NotificationType = 
+  | 'placement_accepted'
+  | 'placement_rejected'
+  | 'new_placement_request'
+  | 'content_uploaded'
+  | 'content_approved'
+  | 'content_revision_requested'
+  | 'campaign_completed'
+  | 'payment_received'
+  | 'payment_sent'
+
+export interface Notification {
+  id: string
+  user_id: string
+  type: NotificationType
+  title: string
+  message: string
+  campaign_id?: string
+  placement_id?: string
+  channel_id?: string
+  action_url?: string
+  is_read: boolean
+  read_at?: string
+  created_at: string
+  updated_at: string
+}
+
 export interface User {
   id: string
   role: UserRole

@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useAuth } from '@/lib/auth/auth-context'
 import { Button } from '@/components/ui/button'
 import { User, LogOut, Settings, LayoutDashboard } from 'lucide-react'
+import { NotificationBell } from './notification-bell'
 import { useState, useRef, useEffect } from 'react'
 
 export function HeaderAuth() {
@@ -49,11 +50,16 @@ export function HeaderAuth() {
   const userRole = user.user_metadata?.role || 'advertiser'
 
   return (
-    <div className="relative" ref={dropdownRef}>
-      <button
-        onClick={() => setDropdownOpen(!dropdownOpen)}
-        className="flex items-center gap-2 rounded-lg px-3 py-2 transition-colors hover:bg-gray-100"
-      >
+    <div className="flex items-center gap-3">
+      {/* Notification Bell */}
+      <NotificationBell />
+      
+      {/* User Menu */}
+      <div className="relative" ref={dropdownRef}>
+        <button
+          onClick={() => setDropdownOpen(!dropdownOpen)}
+          className="flex items-center gap-2 rounded-lg px-3 py-2 transition-colors hover:bg-gray-100"
+        >
         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-pink-500 text-sm font-semibold text-white">
           {displayName.charAt(0).toUpperCase()}
         </div>
@@ -104,6 +110,7 @@ export function HeaderAuth() {
           </div>
         </div>
       )}
+      </div>
     </div>
   )
 }

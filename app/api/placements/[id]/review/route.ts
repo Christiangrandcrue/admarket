@@ -281,8 +281,24 @@ export async function PATCH(
         }
 
         console.log(`✅ Content review email sent to: ${creator.email}`)
+
+        // Create in-app notification
+        const { createNotification } = await import('@/lib/notifications/create-notification')
+        await createNotification({
+          userId: channel.owner_user_id,
+          type: action === 'approve' ? 'content_approved' : 'content_revision_requested',
+          title: action === 'approve' ? 'Контент одобрен' : 'Требуются изменения',
+          message: action === 'approve'
+            ? `Рекламодатель одобрил ваш контент для кампании "${campaign.title}". Поздравляем!${review_notes ? ` Комментарий: ${review_notes}` : ''}`
+            : `Рекламодатель запросил изменения контента для кампании "${campaign.title}". ${review_notes || 'Пожалуйста, внесите коррективы.'}`,
+          campaignId: campaign.id,
+          placementId: id,
+          actionUrl: placementUrl,
+        })
+
+        console.log(`✅ Notification created for creator`)
       } catch (emailError) {
-        console.error('❌ Error sending content review email:', emailError)
+        console.error('❌ Error sending notification:', emailError)
         // Don't fail the request if email fails
       }
     }

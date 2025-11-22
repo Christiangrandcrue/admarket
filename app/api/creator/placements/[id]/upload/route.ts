@@ -213,8 +213,22 @@ export async function POST(
         })
 
         console.log(`✅ Content upload email sent to: ${advertiser.email}`)
+
+        // Create in-app notification
+        const { createNotification } = await import('@/lib/notifications/create-notification')
+        await createNotification({
+          userId: campaign.advertiser_id,
+          type: 'content_uploaded',
+          title: 'Контент загружен',
+          message: `Блогер ${placement.channel_title} загрузил контент для кампании "${campaign.title}". Ожидает вашей проверки.`,
+          campaignId: campaign.id,
+          placementId: id,
+          actionUrl: campaignUrl,
+        })
+
+        console.log(`✅ Notification created for advertiser`)
       } catch (emailError) {
-        console.error('❌ Error sending content upload email:', emailError)
+        console.error('❌ Error sending notification:', emailError)
         // Don't fail the request if email fails
       }
     }

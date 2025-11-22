@@ -150,9 +150,29 @@ export async function POST(request: NextRequest) {
               })
 
               console.log(`✅ Placement request email sent to: ${creator.email}`)
+
+              // Create in-app notification
+              const { createNotification } = await import('@/lib/notifications/create-notification')
+              const formattedBudget = new Intl.NumberFormat('ru-RU', {
+                style: 'currency',
+                currency: 'RUB',
+                minimumFractionDigits: 0,
+              }).format(placement.budget)
+              
+              await createNotification({
+                userId: creator.id,
+                type: 'new_placement_request',
+                title: 'Новая заявка на размещение',
+                message: `Рекламодатель ${advertiserName} отправил вам заявку на размещение по кампании "${insertedCampaign.title}" с бюджетом ${formattedBudget}`,
+                campaignId: insertedCampaign.id,
+                placementId: placement.id,
+                actionUrl: requestUrl,
+              })
+
+              console.log(`✅ Notification created for creator`)
             }
           } catch (emailError) {
-            console.error('❌ Error sending placement request email:', emailError)
+            console.error('❌ Error sending notification:', emailError)
             // Don't fail the request if email fails
           }
         }
