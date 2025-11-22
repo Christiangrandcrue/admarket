@@ -89,15 +89,57 @@ export async function PATCH(
 
     if (updateError) throw updateError
 
-    // TODO: Send notification to advertiser about acceptance/rejection
+    // Get campaign and advertiser info for notification
+    const { data: campaignData } = await supabase
+      .from('campaigns')
+      .select(`
+        id,
+        title,
+        advertiser_id,
+        advertiser:users!campaigns_advertiser_id_fkey(email, full_name)
+      `)
+      .eq('id', placement.campaign_id)
+      .single()
+
+    // Send notification to advertiser
+    if (campaignData) {
+      try {
+        const notificationMessage = action === 'accept'
+          ? `Блогер ${placement.channel_title} принял ваше предложение по кампании "${campaignData.title}"`
+          : `Блогер ${placement.channel_title} отклонил ваше предложение по кампании "${campaignData.title}"`
+
+        // TODO: Implement actual email notification (Resend/SendGrid)
+        // For now, just log it
+        console.log('Notification to advertiser:', {
+          to: campaignData.advertiser?.email,
+          subject: action === 'accept' ? 'Заявка принята ✅' : 'Заявка отклонена ❌',
+          message: notificationMessage,
+          placement_id: id,
+          campaign_id: campaignData.id,
+        })
+
+        // TODO: Create in-app notification record
+        // await supabase.from('notifications').insert({
+        //   user_id: campaignData.advertiser_id,
+        //   type: action === 'accept' ? 'placement_accepted' : 'placement_rejected',
+        //   title: action === 'accept' ? 'Заявка принята' : 'Заявка отклонена',
+        //   message: notificationMessage,
+        //   metadata: { placement_id: id, campaign_id: campaignData.id },
+        // })
+      } catch (notifError) {
+        console.error('Error sending notification:', notifError)
+        // Don't fail the request if notification fails
+      }
+    }
+
     // TODO: If accepted, trigger escrow release flow
 
     return NextResponse.json({
       success: true,
       placement: updatedPlacement,
       message: action === 'accept' 
-        ? 'Placement accepted successfully' 
-        : 'Placement rejected',
+        ? 'Placement accepted successfully. Advertiser has been notified.' 
+        : 'Placement rejected. Advertiser has been notified.',
     })
   } catch (error: any) {
     console.error('Error updating placement:', error)

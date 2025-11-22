@@ -12,17 +12,50 @@ import {
   Download,
 } from 'lucide-react'
 
+interface Transaction {
+  id: string
+  type: string
+  amount: number
+  status: string
+  date: string
+}
+
 export default function CreatorEarningsPage() {
   const [stats, setStats] = useState({
     totalEarned: 0,
     pendingPayout: 0,
+    availableForWithdrawal: 0,
     completedPlacements: 0,
+    activePlacements: 0,
   })
+  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // TODO: Fetch earnings data from API
-    // For now, using placeholder
+    fetchEarnings()
   }, [])
+
+  const fetchEarnings = async () => {
+    try {
+      const response = await fetch('/api/creator/earnings')
+      const data = await response.json()
+
+      if (response.ok) {
+        setStats(data.stats || {
+          totalEarned: 0,
+          pendingPayout: 0,
+          availableForWithdrawal: 0,
+          completedPlacements: 0,
+          activePlacements: 0,
+        })
+        setTransactions(data.transactions || [])
+      }
+    } catch (error) {
+      console.error('Error fetching earnings:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const formatBudget = (amount: number) => {
     return new Intl.NumberFormat('ru-RU', {
@@ -30,6 +63,26 @@ export default function CreatorEarningsPage() {
       currency: 'RUB',
       minimumFractionDigits: 0,
     }).format(amount)
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('ru-RU', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    })
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="container mx-auto px-4">
+          <div className="flex h-64 items-center justify-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-black"></div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -119,18 +172,49 @@ export default function CreatorEarningsPage() {
             </Button>
           </div>
 
-          {/* Empty State */}
-          <div className="py-12 text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
-              <DollarSign className="h-8 w-8 text-gray-400" />
+          {/* Transaction List or Empty State */}
+          {transactions.length === 0 ? (
+            <div className="py-12 text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
+                <DollarSign className="h-8 w-8 text-gray-400" />
+              </div>
+              <h3 className="mb-2 text-lg font-semibold text-gray-900">
+                История пока пуста
+              </h3>
+              <p className="text-gray-600">
+                Выплаты появятся здесь после завершения размещений
+              </p>
             </div>
-            <h3 className="mb-2 text-lg font-semibold text-gray-900">
-              История пока пуста
-            </h3>
-            <p className="text-gray-600">
-              Выплаты появятся здесь после завершения размещений
-            </p>
-          </div>
+          ) : (
+            <div className="space-y-3">
+              {transactions.map((tx) => (
+                <div
+                  key={tx.id}
+                  className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 p-4"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100">
+                      <CheckCircle2 className="h-5 w-5 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">
+                        Выплата за размещение
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        {formatDate(tx.date)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-lg font-bold text-green-600">
+                      +{formatBudget(tx.amount)}
+                    </p>
+                    <p className="text-sm text-gray-600">{tx.status}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

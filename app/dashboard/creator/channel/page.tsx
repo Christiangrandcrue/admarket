@@ -3,24 +3,133 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
   ArrowLeft,
   Users,
-  Settings,
-  DollarSign,
   CheckCircle2,
   AlertCircle,
+  Loader2,
+  Save,
 } from 'lucide-react'
 
+interface ChannelFormData {
+  channel_id?: string
+  platform: string
+  handle: string
+  title: string
+  description: string
+  category: string
+  followers_count: number
+  avg_views: number
+  engagement_rate: number
+  formats: {
+    story?: number
+    post?: number
+    video?: number
+    short?: number
+    integration?: number
+    dedicated?: number
+  }
+}
+
+const initialFormData: ChannelFormData = {
+  platform: 'instagram',
+  handle: '',
+  title: '',
+  description: '',
+  category: 'lifestyle',
+  followers_count: 0,
+  avg_views: 0,
+  engagement_rate: 0,
+  formats: {},
+}
+
 export default function CreatorChannelPage() {
-  const [channel, setChannel] = useState<any>(null)
+  const [formData, setFormData] = useState<ChannelFormData>(initialFormData)
   const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
 
   useEffect(() => {
-    // TODO: Fetch user's channel from API
-    // For now, placeholder
-    setLoading(false)
+    fetchChannel()
   }, [])
+
+  const fetchChannel = async () => {
+    try {
+      const response = await fetch('/api/creator/channel')
+      const data = await response.json()
+
+      if (response.ok && data.channels && data.channels.length > 0) {
+        const channel = data.channels[0]
+        setFormData({
+          channel_id: channel.id,
+          platform: channel.platform || 'instagram',
+          handle: channel.handle || '',
+          title: channel.title || '',
+          description: channel.description || '',
+          category: channel.category || 'lifestyle',
+          followers_count: channel.followers_count || 0,
+          avg_views: channel.avg_views || 0,
+          engagement_rate: channel.engagement_rate || 0,
+          formats: channel.formats || {},
+        })
+      }
+    } catch (error: any) {
+      console.error('Error fetching channel:', error)
+      setError(error.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSaving(true)
+    setError(null)
+    setSuccess(false)
+
+    try {
+      const endpoint = '/api/creator/channel'
+      const method = formData.channel_id ? 'PATCH' : 'POST'
+      
+      const response = await fetch(endpoint, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to save channel')
+      }
+
+      setSuccess(true)
+      if (!formData.channel_id && data.channel) {
+        setFormData((prev) => ({ ...prev, channel_id: data.channel.id }))
+      }
+      
+      setTimeout(() => setSuccess(false), 3000)
+    } catch (error: any) {
+      console.error('Error saving channel:', error)
+      setError(error.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const updateField = (field: keyof ChannelFormData, value: any) => {
+    setFormData((prev) => ({ ...prev, [field]: value }))
+  }
+
+  const updateFormatPrice = (format: string, price: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      formats: { ...prev.formats, [format]: price },
+    }))
+  }
 
   if (loading) {
     return (
@@ -51,66 +160,47 @@ export default function CreatorChannelPage() {
           </div>
         </div>
 
-        {/* Channel Setup Notice */}
-        <div className="mb-8 rounded-2xl border border-orange-200 bg-orange-50 p-6">
-          <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-orange-600">
-              <AlertCircle className="h-6 w-6 text-white" />
-            </div>
-            <div className="flex-1">
-              <h3 className="mb-2 font-semibold text-orange-900">
-                Настройка канала
-              </h3>
-              <p className="mb-4 text-sm text-orange-700">
-                Для получения заявок от рекламодателей необходимо добавить свой канал в каталог. 
-                Укажите метрики, аудиторию, прайс на размещения и пройдите верификацию.
-              </p>
-              <Button className="gap-2">
-                <Users className="h-4 w-4" />
-                Добавить канал в каталог
-              </Button>
+        {/* Success Message */}
+        {success && (
+          <div className="mb-6 rounded-xl border border-green-200 bg-green-50 p-4">
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="h-5 w-5 text-green-600" />
+              <p className="font-semibold text-green-900">Изменения сохранены успешно!</p>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Quick Stats */}
-        <div className="mb-8 grid gap-6 md:grid-cols-3">
-          <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-            <div className="mb-4 flex items-center justify-between">
-              <p className="text-sm font-medium text-gray-600">Статус канала</p>
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-100">
-                <Settings className="h-5 w-5 text-yellow-600" />
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="h-5 w-5 text-red-600" />
+              <p className="font-semibold text-red-900">Ошибка: {error}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Notice for new channels */}
+        {!formData.channel_id && (
+          <div className="mb-8 rounded-2xl border border-blue-200 bg-blue-50 p-6">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-600">
+                <Users className="h-6 w-6 text-white" />
+              </div>
+              <div className="flex-1">
+                <h3 className="mb-2 font-semibold text-blue-900">
+                  Добавьте свой канал в каталог
+                </h3>
+                <p className="text-sm text-blue-700">
+                  Заполните информацию о канале, метрики и прайс. После проверки модератором
+                  ваш канал появится в каталоге и рекламодатели смогут отправлять заявки.
+                </p>
               </div>
             </div>
-            <p className="text-xl font-bold text-gray-900">Не настроен</p>
-            <p className="mt-2 text-sm text-gray-600">Требуется заполнение данных</p>
           </div>
+        )}
 
-          <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-            <div className="mb-4 flex items-center justify-between">
-              <p className="text-sm font-medium text-gray-600">Верификация</p>
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100">
-                <CheckCircle2 className="h-5 w-5 text-gray-400" />
-              </div>
-            </div>
-            <p className="text-xl font-bold text-gray-900">Не пройдена</p>
-            <p className="mt-2 text-sm text-gray-600">Подтвердите владение</p>
-          </div>
-
-          <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-            <div className="mb-4 flex items-center justify-between">
-              <p className="text-sm font-medium text-gray-600">Прайс</p>
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100">
-                <DollarSign className="h-5 w-5 text-gray-400" />
-              </div>
-            </div>
-            <p className="text-xl font-bold text-gray-900">Не указан</p>
-            <p className="mt-2 text-sm text-gray-600">Установите цены</p>
-          </div>
-        </div>
-
-        {/* Setup Sections */}
-        <div className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
           {/* Basic Info */}
           <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
             <h3 className="mb-4 text-lg font-semibold text-gray-900">
@@ -119,27 +209,80 @@ export default function CreatorChannelPage() {
             <div className="space-y-4">
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-900">
-                  Платформа
+                  Платформа <span className="text-red-600">*</span>
                 </label>
-                <p className="text-sm text-gray-600">
-                  Выберите платформу: TikTok, YouTube, Instagram, Telegram, VK
-                </p>
+                <select
+                  value={formData.platform}
+                  onChange={(e) => updateField('platform', e.target.value)}
+                  className="w-full rounded-xl border border-gray-200 p-3 focus:border-purple-600 focus:outline-none"
+                  required
+                >
+                  <option value="instagram">Instagram</option>
+                  <option value="tiktok">TikTok</option>
+                  <option value="youtube">YouTube</option>
+                  <option value="telegram">Telegram</option>
+                  <option value="vk">VK</option>
+                </select>
               </div>
+
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-900">
-                  Название канала / Handle
+                  Handle / Username <span className="text-red-600">*</span>
                 </label>
-                <p className="text-sm text-gray-600">
-                  Например: @your_channel
-                </p>
+                <Input
+                  type="text"
+                  value={formData.handle}
+                  onChange={(e) => updateField('handle', e.target.value)}
+                  placeholder="@your_channel"
+                  required
+                />
               </div>
+
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-900">
-                  Тематика
+                  Название канала <span className="text-red-600">*</span>
                 </label>
-                <p className="text-sm text-gray-600">
-                  Tech, Fashion, Food, Gaming, и т.д.
-                </p>
+                <Input
+                  type="text"
+                  value={formData.title}
+                  onChange={(e) => updateField('title', e.target.value)}
+                  placeholder="Название вашего канала"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-900">
+                  Описание
+                </label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => updateField('description', e.target.value)}
+                  placeholder="Краткое описание вашего контента..."
+                  className="min-h-[100px] w-full rounded-xl border border-gray-200 p-3 focus:border-purple-600 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-900">
+                  Тематика <span className="text-red-600">*</span>
+                </label>
+                <select
+                  value={formData.category}
+                  onChange={(e) => updateField('category', e.target.value)}
+                  className="w-full rounded-xl border border-gray-200 p-3 focus:border-purple-600 focus:outline-none"
+                  required
+                >
+                  <option value="lifestyle">Lifestyle</option>
+                  <option value="tech">Tech & Gadgets</option>
+                  <option value="fashion">Fashion & Beauty</option>
+                  <option value="food">Food & Cooking</option>
+                  <option value="travel">Travel</option>
+                  <option value="gaming">Gaming</option>
+                  <option value="fitness">Fitness & Health</option>
+                  <option value="business">Business & Finance</option>
+                  <option value="entertainment">Entertainment</option>
+                </select>
               </div>
             </div>
           </div>
@@ -149,30 +292,43 @@ export default function CreatorChannelPage() {
             <h3 className="mb-4 text-lg font-semibold text-gray-900">
               Метрики и аудитория
             </h3>
-            <div className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-3">
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-900">
-                  Количество подписчиков
+                  Подписчики <span className="text-red-600">*</span>
                 </label>
-                <p className="text-sm text-gray-600">
-                  Текущее количество подписчиков
-                </p>
+                <Input
+                  type="number"
+                  value={formData.followers_count}
+                  onChange={(e) => updateField('followers_count', parseInt(e.target.value) || 0)}
+                  placeholder="10000"
+                  required
+                />
               </div>
+
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-900">
                   Средние просмотры
                 </label>
-                <p className="text-sm text-gray-600">
-                  Среднее количество просмотров на публикацию
-                </p>
+                <Input
+                  type="number"
+                  value={formData.avg_views}
+                  onChange={(e) => updateField('avg_views', parseInt(e.target.value) || 0)}
+                  placeholder="5000"
+                />
               </div>
+
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-900">
-                  Engagement Rate (ER)
+                  ER (%)
                 </label>
-                <p className="text-sm text-gray-600">
-                  Процент вовлечённости аудитории
-                </p>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={formData.engagement_rate}
+                  onChange={(e) => updateField('engagement_rate', parseFloat(e.target.value) || 0)}
+                  placeholder="3.5"
+                />
               </div>
             </div>
           </div>
@@ -182,43 +338,106 @@ export default function CreatorChannelPage() {
             <h3 className="mb-4 text-lg font-semibold text-gray-900">
               Прайс на размещения
             </h3>
-            <div className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-900">
-                    📸 Story / Stories (₽)
-                  </label>
-                  <p className="text-sm text-gray-600">Цена за сторис</p>
-                </div>
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-900">
-                    📝 Пост (₽)
-                  </label>
-                  <p className="text-sm text-gray-600">Цена за пост</p>
-                </div>
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-900">
-                    🎥 Видео (₽)
-                  </label>
-                  <p className="text-sm text-gray-600">Цена за видео</p>
-                </div>
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-900">
-                    ⚡ Short / Reels (₽)
-                  </label>
-                  <p className="text-sm text-gray-600">Цена за короткое видео</p>
-                </div>
+            <p className="mb-4 text-sm text-gray-600">
+              Укажите цены в рублях за каждый формат размещения
+            </p>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-900">
+                  📸 Story / Stories (₽)
+                </label>
+                <Input
+                  type="number"
+                  value={formData.formats.story || ''}
+                  onChange={(e) => updateFormatPrice('story', parseInt(e.target.value) || 0)}
+                  placeholder="5000"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-900">
+                  📝 Пост (₽)
+                </label>
+                <Input
+                  type="number"
+                  value={formData.formats.post || ''}
+                  onChange={(e) => updateFormatPrice('post', parseInt(e.target.value) || 0)}
+                  placeholder="10000"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-900">
+                  🎥 Видео (₽)
+                </label>
+                <Input
+                  type="number"
+                  value={formData.formats.video || ''}
+                  onChange={(e) => updateFormatPrice('video', parseInt(e.target.value) || 0)}
+                  placeholder="15000"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-900">
+                  ⚡ Short / Reels (₽)
+                </label>
+                <Input
+                  type="number"
+                  value={formData.formats.short || ''}
+                  onChange={(e) => updateFormatPrice('short', parseInt(e.target.value) || 0)}
+                  placeholder="8000"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-900">
+                  🎬 Интеграция в видео (₽)
+                </label>
+                <Input
+                  type="number"
+                  value={formData.formats.integration || ''}
+                  onChange={(e) => updateFormatPrice('integration', parseInt(e.target.value) || 0)}
+                  placeholder="20000"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-900">
+                  🎯 Отдельный ролик (₽)
+                </label>
+                <Input
+                  type="number"
+                  value={formData.formats.dedicated || ''}
+                  onChange={(e) => updateFormatPrice('dedicated', parseInt(e.target.value) || 0)}
+                  placeholder="30000"
+                />
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Save Button */}
-        <div className="mt-8">
-          <Button size="lg" className="w-full md:w-auto">
-            Сохранить изменения
-          </Button>
-        </div>
+          {/* Save Button */}
+          <div className="flex gap-4">
+            <Button
+              type="submit"
+              size="lg"
+              disabled={saving}
+              className="gap-2"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Сохранение...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4" />
+                  {formData.channel_id ? 'Сохранить изменения' : 'Создать канал'}
+                </>
+              )}
+            </Button>
+          </div>
+        </form>
       </div>
     </div>
   )
