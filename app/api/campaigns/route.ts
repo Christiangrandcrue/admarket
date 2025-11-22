@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { sendEmail } from '@/lib/email/resend'
+import { newPlacementRequestEmail } from '@/lib/email/templates'
 
 export async function POST(request: NextRequest) {
   try {
@@ -105,13 +107,52 @@ export async function POST(request: NextRequest) {
     }))
 
     if (placements.length > 0) {
-      const { error: placementsError } = await supabase
+      const { data: insertedPlacements, error: placementsError } = await supabase
         .from('placements')
         .insert(placements)
+        .select()
 
       if (placementsError) {
         console.error('Error creating placements:', placementsError)
         // Don't fail the whole request if placements fail
+      } else if (insertedPlacements) {
+        // Send email notifications to creators for each placement
+        for (const placement of insertedPlacements) {
+          try {
+            // Get creator email from channel
+            const { data: channel } = await supabase
+              .from('channels')
+              .select('creator:users!channels_creator_id_fkey(email, full_name)')
+              .eq('id', placement.channel_id)
+              .single()
+
+            if (channel?.creator?.email) {
+              const creatorName = channel.creator.full_name || 'Блогер'
+              const advertiserName = user.email?.split('@')[0] || 'Рекламодатель'
+              const requestUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/creator/placements/${placement.id}`
+
+              const emailContent = newPlacementRequestEmail({
+                creatorName,
+                advertiserName,
+                campaignTitle: insertedCampaign.title,
+                budget: placement.budget,
+                requestUrl,
+              })
+
+              await sendEmail({
+                to: channel.creator.email,
+                subject: emailContent.subject,
+                html: emailContent.html,
+                text: emailContent.text,
+              })
+
+              console.log(`✅ Placement request email sent to: ${channel.creator.email}`)
+            }
+          } catch (emailError) {
+            console.error('❌ Error sending placement request email:', emailError)
+            // Don't fail the request if email fails
+          }
+        }
       }
     }
 

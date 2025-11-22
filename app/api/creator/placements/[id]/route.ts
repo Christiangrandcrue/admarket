@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { sendEmail } from '@/lib/email/resend'
+import { placementAcceptedEmail, placementRejectedEmail } from '@/lib/email/templates'
 
 export async function PATCH(
   request: NextRequest,
@@ -101,22 +103,46 @@ export async function PATCH(
       .eq('id', placement.campaign_id)
       .single()
 
-    // Send notification to advertiser
-    if (campaignData) {
+    // Send email notification to advertiser
+    if (campaignData && campaignData.advertiser?.email) {
       try {
-        const notificationMessage = action === 'accept'
-          ? `Блогер ${placement.channel_title} принял ваше предложение по кампании "${campaignData.title}"`
-          : `Блогер ${placement.channel_title} отклонил ваше предложение по кампании "${campaignData.title}"`
+        const advertiserName = campaignData.advertiser.full_name || 'Рекламодатель'
+        const campaignUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/advertiser/campaigns/${campaignData.id}`
 
-        // TODO: Implement actual email notification (Resend/SendGrid)
-        // For now, just log it
-        console.log('Notification to advertiser:', {
-          to: campaignData.advertiser?.email,
-          subject: action === 'accept' ? 'Заявка принята ✅' : 'Заявка отклонена ❌',
-          message: notificationMessage,
-          placement_id: id,
-          campaign_id: campaignData.id,
-        })
+        if (action === 'accept') {
+          // Send acceptance email
+          const emailContent = placementAcceptedEmail({
+            advertiserName,
+            channelTitle: placement.channel_title,
+            campaignTitle: campaignData.title,
+            campaignUrl,
+          })
+
+          await sendEmail({
+            to: campaignData.advertiser.email,
+            subject: emailContent.subject,
+            html: emailContent.html,
+            text: emailContent.text,
+          })
+        } else {
+          // Send rejection email
+          const emailContent = placementRejectedEmail({
+            advertiserName,
+            channelTitle: placement.channel_title,
+            campaignTitle: campaignData.title,
+            rejectionReason: rejection_reason,
+            campaignUrl,
+          })
+
+          await sendEmail({
+            to: campaignData.advertiser.email,
+            subject: emailContent.subject,
+            html: emailContent.html,
+            text: emailContent.text,
+          })
+        }
+
+        console.log(`✅ Email sent to advertiser: ${campaignData.advertiser.email}`)
 
         // TODO: Create in-app notification record
         // await supabase.from('notifications').insert({
@@ -127,7 +153,7 @@ export async function PATCH(
         //   metadata: { placement_id: id, campaign_id: campaignData.id },
         // })
       } catch (notifError) {
-        console.error('Error sending notification:', notifError)
+        console.error('❌ Error sending email notification:', notifError)
         // Don't fail the request if notification fails
       }
     }
