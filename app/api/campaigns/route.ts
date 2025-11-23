@@ -122,12 +122,12 @@ export async function POST(request: NextRequest) {
             // Get creator email from channel
             const { data: channel } = await supabase
               .from('channels')
-              .select('creator:users!channels_creator_id_fkey(email, full_name)')
+              .select('creator:users!channels_creator_id_fkey(id, email, full_name)')
               .eq('id', placement.channel_id)
               .single()
 
             // Type assertion: creator should be a single object, not array
-            const creator = channel?.creator as unknown as { email: string; full_name: string } | null
+            const creator = channel?.creator as unknown as { id: string; email: string; full_name: string } | null
             
             if (creator?.email) {
               const creatorName = creator.full_name || 'Блогер'
