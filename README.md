@@ -41,8 +41,10 @@
 - **Zustand** — глобальный state management
 - **Моковые данные** для разработки: `lib/mock-data.ts`
 
-### Payments (планируется)
-- **Stripe Connect** — эскроу-платежи с задержкой выплат
+### Payments
+- **Stripe Connect** — реальные эскроу-платежи с автоматическими выплатами
+- **Stripe Elements** — безопасные платёжные формы
+- **Webhooks** — real-time обработка событий платежей
 
 ## Архитектура данных
 
@@ -237,6 +239,36 @@ webapp/
     - Campaign completed
     - Payment received/sent
 
+- [x] **Stripe Connect Integration** (полная платёжная система):
+  - `supabase/migrations/007_add_stripe_fields.sql` — Stripe поля и transactions table
+  - **Connected Accounts** (Express onboarding для блогеров):
+    - `POST /api/stripe/connect/onboard` — создание Connected Account
+    - `GET /api/stripe/connect/status` — проверка статуса верификации
+    - `components/stripe/stripe-connect-button.tsx` — UI для onboarding
+  - **Payment Intent** (эскроу-платежи с manual capture):
+    - `POST /api/stripe/payment-intent` — создание платежа для кампании
+    - `components/stripe/payment-form.tsx` — форма оплаты с Stripe Elements
+    - Средства удерживаются до одобрения контента
+  - **Automatic Fund Release**:
+    - `lib/stripe/release-funds.ts` — автоматическая выплата при approved content
+    - Интеграция в `PATCH /api/placements/[id]/review`
+    - Transfer создаётся автоматически при одобрении
+  - **Webhook Handler**:
+    - `POST /api/stripe/webhook` — обработка событий от Stripe
+    - Events: payment_intent.succeeded, transfer.updated, account.updated
+    - Обновление статусов в БД в real-time
+  - **Transaction History**:
+    - Новая таблица `transactions` для истории платежей
+    - RLS policies для защиты финансовых данных
+    - Интеграция в Creator Earnings page
+  - **Platform Fee**: 10% комиссия платформы с каждой сделки
+  - **Full Payment Flow**:
+    1. Advertiser оплачивает кампанию → funds held in escrow
+    2. Creator загружает контент → pending review
+    3. Advertiser одобряет → automatic transfer to creator
+    4. Platform fee деducted → transaction recorded
+  - См. `STRIPE_SETUP.md` для полной инструкции по настройке
+
 ### 🚧 В разработке
 - [ ] ЛК Рекламодателя (улучшения):
   - Редактирование черновиков кампаний
@@ -249,9 +281,9 @@ webapp/
   - Content revision request reminders
 - [ ] Toast notifications для real-time уведомлений
 - [ ] Sound effects для важных уведомлений
-- [ ] Stripe Connect для эскроу-платежей
 - [ ] Экспорт отчётов в PDF
 - [ ] Админ-панель
+- [ ] Real Analytics Events (замена mock данных)
 
 - [x] **Детальная страница кампании** (`/dashboard/campaigns/[id]`):
   - `GET /api/campaigns/[id]` — получение детальных данных кампании с placements
