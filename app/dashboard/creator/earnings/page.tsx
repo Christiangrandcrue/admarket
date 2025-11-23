@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import { StripeConnectButton } from '@/components/stripe/stripe-connect-button'
 import {
   ArrowLeft,
   DollarSign,
@@ -21,6 +23,9 @@ interface Transaction {
 }
 
 export default function CreatorEarningsPage() {
+  const searchParams = useSearchParams()
+  const onboardingStatus = searchParams.get('onboarding')
+  
   const [stats, setStats] = useState({
     totalEarned: 0,
     pendingPayout: 0,
@@ -30,10 +35,19 @@ export default function CreatorEarningsPage() {
   })
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
+  const [stripeStatus, setStripeStatus] = useState<any>(null)
 
   useEffect(() => {
     fetchEarnings()
+    fetchStripeStatus()
   }, [])
+
+  useEffect(() => {
+    // Show success message after Stripe onboarding
+    if (onboardingStatus === 'success') {
+      fetchStripeStatus()
+    }
+  }, [onboardingStatus])
 
   const fetchEarnings = async () => {
     try {
@@ -54,6 +68,16 @@ export default function CreatorEarningsPage() {
       console.error('Error fetching earnings:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchStripeStatus = async () => {
+    try {
+      const response = await fetch('/api/stripe/connect/status')
+      const data = await response.json()
+      setStripeStatus(data)
+    } catch (error) {
+      console.error('Error fetching Stripe status:', error)
     }
   }
 
@@ -100,6 +124,26 @@ export default function CreatorEarningsPage() {
             <h1 className="text-3xl font-bold text-gray-900">Заработок</h1>
             <p className="text-gray-600">Финансы и история выплат</p>
           </div>
+        </div>
+
+        {/* Stripe Connect Banner */}
+        {onboardingStatus === 'success' && (
+          <div className="mb-6 rounded-lg border border-green-200 bg-green-50 p-4">
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="h-5 w-5 text-green-600" />
+              <p className="text-sm font-medium text-green-900">
+                Stripe успешно подключен! Теперь вы можете получать выплаты.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Stripe Connect Setup */}
+        <div className="mb-8">
+          <StripeConnectButton
+            initialStatus={stripeStatus}
+            onStatusChange={setStripeStatus}
+          />
         </div>
 
         {/* Stats Cards */}

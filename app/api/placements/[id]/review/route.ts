@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { sendEmail } from '@/lib/email/resend'
+import { releaseFundsForPlacement } from '@/lib/stripe/release-funds'
 
 export async function PATCH(
   request: NextRequest,
@@ -303,11 +304,32 @@ export async function PATCH(
       }
     }
 
+    // If approved, trigger automatic fund release
+    if (action === 'approve') {
+      try {
+        const releaseResult = await releaseFundsForPlacement({
+          placementId: id,
+          campaignId: campaign.id,
+        })
+
+        if (releaseResult.success) {
+          console.log(`✅ Funds released automatically for placement ${id}`)
+        } else {
+          console.warn(`⚠️ Failed to release funds: ${releaseResult.reason}`)
+          // Don't fail the approval if payout fails
+          // Funds can be released manually later
+        }
+      } catch (releaseError) {
+        console.error('❌ Error releasing funds:', releaseError)
+        // Don't fail the approval
+      }
+    }
+
     return NextResponse.json({
       success: true,
       placement: updatedPlacement,
       message: action === 'approve' 
-        ? 'Content approved successfully. Creator has been notified.' 
+        ? 'Content approved successfully. Creator has been notified and funds will be released.' 
         : 'Revision requested. Creator has been notified.',
     })
   } catch (error: any) {
