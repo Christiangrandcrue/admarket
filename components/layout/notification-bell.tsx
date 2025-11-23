@@ -6,6 +6,7 @@ import { Bell, Check, CheckCheck, X } from 'lucide-react'
 import { Notification, NotificationType } from '@/types'
 import { formatDistanceToNow } from 'date-fns'
 import { ru } from 'date-fns/locale'
+import { useNotifications } from '@/lib/hooks/use-notifications'
 
 // Notification type icons and colors
 const notificationConfig: Record<
@@ -24,70 +25,20 @@ const notificationConfig: Record<
 }
 
 export function NotificationBell() {
-  const [notifications, setNotifications] = useState<Notification[]>([])
-  const [unreadCount, setUnreadCount] = useState(0)
   const [isOpen, setIsOpen] = useState(false)
-  const [loading, setLoading] = useState(false)
-
-  // Fetch notifications
-  const fetchNotifications = async () => {
-    try {
-      setLoading(true)
-      const response = await fetch('/api/notifications?limit=10')
-      const data = await response.json()
-
-      if (response.ok) {
-        setNotifications(data.notifications || [])
-        setUnreadCount(data.unread_count || 0)
-      }
-    } catch (error) {
-      console.error('Error fetching notifications:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Mark notification as read
-  const markAsRead = async (id: string) => {
-    try {
-      const response = await fetch(`/api/notifications/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ is_read: true }),
-      })
-
-      if (response.ok) {
-        // Update local state
-        setNotifications((prev) =>
-          prev.map((n) =>
-            n.id === id ? { ...n, is_read: true, read_at: new Date().toISOString() } : n
-          )
-        )
-        setUnreadCount((prev) => Math.max(0, prev - 1))
-      }
-    } catch (error) {
-      console.error('Error marking notification as read:', error)
-    }
-  }
-
-  // Mark all as read
-  const markAllAsRead = async () => {
-    try {
-      const response = await fetch('/api/notifications/mark-all-read', {
-        method: 'PATCH',
-      })
-
-      if (response.ok) {
-        // Update local state
-        setNotifications((prev) =>
-          prev.map((n) => ({ ...n, is_read: true, read_at: new Date().toISOString() }))
-        )
-        setUnreadCount(0)
-      }
-    } catch (error) {
-      console.error('Error marking all notifications as read:', error)
-    }
-  }
+  
+  // Use notifications hook with real-time updates
+  const {
+    notifications,
+    unreadCount,
+    loading,
+    markAsRead,
+    markAllAsRead,
+    refresh,
+  } = useNotifications({
+    limit: 10,
+    enableRealtime: true, // 🔥 Real-time updates enabled
+  })
 
   // Handle notification click
   const handleNotificationClick = (notification: Notification) => {
@@ -97,16 +48,12 @@ export function NotificationBell() {
     setIsOpen(false)
   }
 
-  // Fetch on mount and when dropdown opens
-  useEffect(() => {
-    fetchNotifications()
-  }, [])
-
+  // Refresh when dropdown opens (real-time already handles updates)
   useEffect(() => {
     if (isOpen) {
-      fetchNotifications()
+      refresh()
     }
-  }, [isOpen])
+  }, [isOpen, refresh])
 
   // Close dropdown when clicking outside
   useEffect(() => {
