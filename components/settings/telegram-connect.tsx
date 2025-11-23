@@ -21,15 +21,16 @@ export function TelegramConnect() {
   async function checkConnection() {
     try {
       const supabase = createClient()
-      const { data } = await supabase
-        .from('users')
-        .select('telegram_chat_id, telegram_username')
-        .eq('id', user?.id)
-        .single()
+      
+      // Get telegram data from auth.users metadata
+      const { data: authData } = await supabase.auth.getUser()
+      
+      const telegramChatId = authData.user?.user_metadata?.telegram_chat_id
+      const telegramUsername = authData.user?.user_metadata?.telegram_username
 
-      if (data?.telegram_chat_id) {
+      if (telegramChatId) {
         setIsConnected(true)
-        setTelegramUsername(data.telegram_username)
+        setTelegramUsername(telegramUsername)
       }
     } catch (error) {
       console.error('Error checking Telegram connection:', error)
@@ -56,13 +57,10 @@ export function TelegramConnect() {
           
           // Check if connected
           const supabase = createClient()
-          const { data: userData } = await supabase
-            .from('users')
-            .select('telegram_chat_id')
-            .eq('id', user?.id)
-            .single()
+          const { data: authData } = await supabase.auth.getUser()
+          const telegramChatId = authData.user?.user_metadata?.telegram_chat_id
 
-          if (userData?.telegram_chat_id) {
+          if (telegramChatId) {
             setIsConnected(true)
             clearInterval(pollInterval)
             setConnecting(false)

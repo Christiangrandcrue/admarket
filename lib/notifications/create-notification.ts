@@ -60,14 +60,12 @@ async function sendTelegramNotification(params: CreateNotificationParams) {
   try {
     const supabase = await createClient()
 
-    // Get user's telegram_chat_id
-    const { data: user } = await supabase
-      .from('users')
-      .select('telegram_chat_id')
-      .eq('id', params.userId)
-      .single()
+    // Get user's telegram_chat_id from helper function
+    const { data: chatId } = await supabase.rpc('get_user_telegram_chat_id', {
+      p_user_id: params.userId,
+    })
 
-    if (!user?.telegram_chat_id) {
+    if (!chatId) {
       // User hasn't connected Telegram, skip silently
       return
     }
@@ -82,7 +80,7 @@ async function sendTelegramNotification(params: CreateNotificationParams) {
 
     // Send message
     await sendTelegramMessage({
-      chatId: user.telegram_chat_id,
+      chatId: chatId,
       text,
       parseMode: 'HTML',
       replyMarkup,

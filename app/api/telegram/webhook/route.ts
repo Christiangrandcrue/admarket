@@ -22,17 +22,14 @@ export async function POST(request: NextRequest) {
 
       if (verificationCode) {
         // User clicked link with verification code
-        // Save chat_id to user profile
+        // Save chat_id to user profile using helper function
         const supabase = await createClient()
 
-        const { error } = await supabase
-          .from('users')
-          .update({
-            telegram_chat_id: chatId.toString(),
-            telegram_username: username || null,
-            telegram_connected_at: new Date().toISOString(),
-          })
-          .eq('id', verificationCode) // verification code IS user_id for simplicity
+        const { error } = await supabase.rpc('update_user_telegram', {
+          p_user_id: verificationCode, // verification code IS user_id for simplicity
+          p_telegram_chat_id: chatId.toString(),
+          p_telegram_username: username || null,
+        })
 
         if (error) {
           console.error('Error connecting Telegram:', error)

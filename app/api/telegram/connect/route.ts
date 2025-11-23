@@ -50,15 +50,10 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Remove telegram connection
-    const { error } = await supabase
-      .from('users')
-      .update({
-        telegram_chat_id: null,
-        telegram_username: null,
-        telegram_connected_at: null,
-      })
-      .eq('id', user.id)
+    // Remove telegram connection using helper function
+    const { error } = await supabase.rpc('disconnect_user_telegram', {
+      p_user_id: user.id,
+    })
 
     if (error) {
       console.error('Error disconnecting Telegram:', error)
