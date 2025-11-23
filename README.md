@@ -217,6 +217,26 @@ webapp/
     - Email creator-у об одобрении контента (✅)
     - Email creator-у о запросе изменений (🔄)
 
+- [x] **In-app Notifications** (полная система):
+  - `supabase/migrations/004_create_notifications_table.sql` — таблица с 9 типами уведомлений
+  - `lib/notifications/create-notification.ts` — helper для создания уведомлений
+  - `GET /api/notifications` — получение уведомлений с фильтрами
+  - `PATCH /api/notifications/[id]` — отметить как прочитанное
+  - `PATCH /api/notifications/mark-all-read` — отметить все как прочитанные
+  - `components/layout/notification-bell.tsx` — dropdown в header с badge counter
+  - `/dashboard/notifications` — полная страница уведомлений
+  - **Real-time updates** (Supabase Realtime):
+    - `supabase/migrations/005_enable_realtime_for_notifications.sql` — включение Realtime
+    - `lib/hooks/use-notifications.ts` — custom hook с WebSocket subscriptions
+    - Мгновенное получение уведомлений без перезагрузки страницы
+    - Автоматическое обновление badge counter при новых уведомлениях
+  - Интеграция во все ключевые события:
+    - Placement accepted/rejected
+    - New placement request
+    - Content uploaded/approved/revision_requested
+    - Campaign completed
+    - Payment received/sent
+
 ### 🚧 В разработке
 - [ ] ЛК Рекламодателя (улучшения):
   - Редактирование черновиков кампаний
@@ -227,7 +247,8 @@ webapp/
   - Напоминания о просроченных заявках
   - Уведомления о завершении кампании
   - Content revision request reminders
-- [ ] In-app Notifications система
+- [ ] Toast notifications для real-time уведомлений
+- [ ] Sound effects для важных уведомлений
 - [ ] Stripe Connect для эскроу-платежей
 - [ ] Экспорт отчётов в PDF
 - [ ] Админ-панель
@@ -410,6 +431,22 @@ npx wrangler pages deploy out --project-name=admarket
 **Статус**: 🚧 В активной разработке
 
 ### Недавние изменения (23.11.2025)
+
+**Real-time Notifications** (commit a8ad4c0):
+- ✅ Создан `useNotifications` hook с Supabase Realtime subscriptions
+- ✅ Рефакторинг NotificationBell для instant updates через WebSocket
+- ✅ Migration 005: включён Realtime для notifications table
+- ✅ Мгновенное получение уведомлений без перезагрузки страницы
+- ✅ Автоматическое обновление badge counter при новых уведомлениях
+- 📖 Создан REALTIME_SETUP.md с инструкцией по применению миграции
+
+**In-app Notifications System** (commit предыдущий):
+- ✅ Создана полная система уведомлений с 9 типами событий
+- ✅ API endpoints: GET /api/notifications, PATCH /api/notifications/[id], PATCH /api/notifications/mark-all-read
+- ✅ NotificationBell компонент в header с badge counter
+- ✅ Полная страница /dashboard/notifications с фильтрами
+- ✅ Интеграция во все ключевые события (placements, content, payments)
+- ✅ Helper функция create_notification() с SECURITY DEFINER для обхода RLS
 
 **Welcome Email System** (commit 905b829):
 - ✅ Созданы welcomeAdvertiserEmail() и welcomeCreatorEmail() templates
