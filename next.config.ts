@@ -6,9 +6,7 @@ const nextConfig: NextConfig = {
     unoptimized: true
   },
   // Reduce bundle size
-  productionBrowserSourceMaps: false,
-  // Standalone output for production
-  output: 'standalone'
+  productionBrowserSourceMaps: false
 };
 
 export default nextConfig;
