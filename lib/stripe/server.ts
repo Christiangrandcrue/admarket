@@ -72,7 +72,7 @@ export async function createPaymentIntent(params: {
   metadata: {
     campaignId: string
     advertiserId: string
-    platformFee: number
+    platformFee: string
   }
 }) {
   const paymentIntent = await stripe.paymentIntents.create({
@@ -121,6 +121,7 @@ export async function transferToCreator(params: {
     campaignId: string
     placementId: string
     creatorId: string
+    [key: string]: string
   }
 }) {
   const transfer = await stripe.transfers.create({
