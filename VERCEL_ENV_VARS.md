@@ -12,21 +12,21 @@
 
 ```bash
 # ============================================
-# STRIPE (Test Mode)
+# STRIPE (Test Mode) - ЗАМЕНИ НА СВОИ КЛЮЧИ
 # ============================================
-STRIPE_SECRET_KEY=sk_test_51SR61NFqMRSVCimKWWWAk29OoWAtZQ2zEyKv1bK4h8l6mLm8duB55NmEvPDLI3ak5olTieVJoct0pBGJDqzsWTwW00gnuSgPDk
+STRIPE_SECRET_KEY=sk_test_YOUR_STRIPE_SECRET_KEY_HERE
 
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_51SR61NFqMRSVCimKtWAl97mbT6T1qIwuRC3XNZ3rP8waRil66aHOG3MN0ELHBnIp2GRV2wg8VRG0kXacupeNJtKV00tfHlskSK
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_YOUR_STRIPE_PUBLISHABLE_KEY_HERE
 
 # ⚠️ ПОЛУЧИ ЭТОТ ИЗ STRIPE DASHBOARD
-STRIPE_WEBHOOK_SECRET=whsec_ВСТАВЬ_СЮДА_SIGNING_SECRET_ИЗ_STRIPE
+STRIPE_WEBHOOK_SECRET=whsec_YOUR_WEBHOOK_SECRET_FROM_STRIPE
 
 # ============================================
-# TELEGRAM BOT
+# TELEGRAM BOT - ЗАМЕНИ НА СВОЙ ТОКЕН
 # ============================================
-TELEGRAM_BOT_TOKEN=8424433192:AAHm8Oc6Tu-AhhGYDGWQU6j3cej4k4ygxek
+TELEGRAM_BOT_TOKEN=YOUR_BOT_TOKEN_FROM_BOTFATHER
 
-NEXT_PUBLIC_TELEGRAM_BOT_USERNAME=Sn_Influencers_bot
+NEXT_PUBLIC_TELEGRAM_BOT_USERNAME=YOUR_BOT_USERNAME
 
 # ============================================
 # APPLICATION
