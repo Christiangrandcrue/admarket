@@ -1,243 +1,96 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
-import { sendEmail } from '@/lib/email/resend'
-import { newPlacementRequestEmail } from '@/lib/email/templates'
+import { NextResponse } from 'next/server'
 
-export async function POST(request: NextRequest) {
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+
+// GET /api/campaigns - List campaigns for advertiser
+export async function GET(request: Request) {
   try {
-    const supabase = await createClient()
+    const { searchParams } = new URL(request.url)
+    const advertiserId = searchParams.get('advertiser_id')
+
+    let url = `${supabaseUrl}/rest/v1/campaigns?select=*&order=created_at.desc`
     
-    // Get authenticated user
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized. Please log in.' },
-        { status: 401 }
-      )
+    if (advertiserId) {
+      url += `&advertiser_id=eq.${advertiserId}`
     }
 
-    // Parse campaign data
-    const campaignData = await request.json()
+    const response = await fetch(url, {
+      headers: {
+        apikey: supabaseKey,
+        Authorization: `Bearer ${supabaseKey}`,
+      },
+    })
 
-    // Validate required fields
-    const validationErrors = []
-
-    if (!campaignData.description || campaignData.description.length < 50) {
-      validationErrors.push('Description must be at least 50 characters')
-    }
-    if (!campaignData.selectedChannels || campaignData.selectedChannels.length === 0) {
-      validationErrors.push('At least one channel must be selected')
-    }
-    if (!campaignData.defaultFormats || campaignData.defaultFormats.length === 0) {
-      validationErrors.push('At least one format must be selected')
-    }
-    if (!campaignData.totalBudget || campaignData.totalBudget <= 0) {
-      validationErrors.push('Budget must be greater than 0')
-    }
-    if (!campaignData.startDate || !campaignData.endDate) {
-      validationErrors.push('Start and end dates are required')
-    }
-    if (!campaignData.briefDescription || campaignData.briefDescription.length === 0) {
-      validationErrors.push('Brief description is required')
-    }
-    if (!campaignData.landingUrl || campaignData.landingUrl.length === 0) {
-      validationErrors.push('Landing URL is required')
-    }
-    if (!campaignData.agreedToTerms) {
-      validationErrors.push('You must agree to the terms and conditions')
+    if (!response.ok) {
+      throw new Error('Failed to fetch campaigns')
     }
 
-    if (validationErrors.length > 0) {
-      return NextResponse.json(
-        { error: 'Validation failed', details: validationErrors },
-        { status: 400 }
-      )
-    }
-
-    // Calculate platform commission (10%)
-    const platformFee = campaignData.totalBudget * 0.1
-    const creatorPayout = campaignData.totalBudget - platformFee
-
-    // Prepare campaign record
-    const campaign = {
-      advertiser_id: user.id,
-      title: campaignData.description.substring(0, 100), // First 100 chars
-      description: campaignData.description,
-      goal: campaignData.goal,
-      status: 'pending', // Pending until payment
-      total_budget: campaignData.totalBudget,
-      payment_model: campaignData.paymentModel,
-      start_date: campaignData.startDate,
-      end_date: campaignData.endDate,
-      brief: campaignData.briefDescription,
-      landing_url: campaignData.landingUrl,
-      utm_campaign: campaignData.utmCampaign || `campaign_${Date.now()}`,
-      promo_code: campaignData.promoCode || null,
-      kpis: campaignData.kpis || {},
-      selected_channels: campaignData.selectedChannels || [],
-      default_formats: campaignData.defaultFormats || [],
-      content_requirements: campaignData.contentRequirements || [],
-      restrictions: campaignData.restrictions || [],
-      platform_fee: platformFee,
-      creator_payout: creatorPayout,
-    }
-
-    // Insert campaign into database
-    const { data: insertedCampaign, error: insertError } = await supabase
-      .from('campaigns')
-      .insert([campaign])
-      .select()
-      .single()
-
-    if (insertError) throw insertError
-
-    // Create placements for each selected channel
-    const placements = campaignData.selectedChannels.map((channel: any) => ({
-      campaign_id: insertedCampaign.id,
-      channel_id: channel.channelId,
-      channel_title: channel.channelTitle,
-      channel_handle: channel.channelHandle,
-      formats: channel.formats || campaignData.defaultFormats,
-      budget: channel.budget || 0,
-      status: 'pending',
-    }))
-
-    if (placements.length > 0) {
-      const { data: insertedPlacements, error: placementsError } = await supabase
-        .from('placements')
-        .insert(placements)
-        .select()
-
-      if (placementsError) {
-        console.error('Error creating placements:', placementsError)
-        // Don't fail the whole request if placements fail
-      } else if (insertedPlacements) {
-        // Send email notifications to creators for each placement
-        for (const placement of insertedPlacements) {
-          try {
-            // Get creator email from channel
-            const { data: channel } = await supabase
-              .from('channels')
-              .select('creator:users!channels_creator_id_fkey(id, email, full_name)')
-              .eq('id', placement.channel_id)
-              .single()
-
-            // Type assertion: creator should be a single object, not array
-            const creator = channel?.creator as unknown as { id: string; email: string; full_name: string } | null
-            
-            if (creator?.email) {
-              const creatorName = creator.full_name || 'Блогер'
-              const advertiserName = user.email?.split('@')[0] || 'Рекламодатель'
-              const requestUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/creator/placements/${placement.id}`
-
-              const emailContent = newPlacementRequestEmail({
-                creatorName,
-                advertiserName,
-                campaignTitle: insertedCampaign.title,
-                budget: placement.budget,
-                requestUrl,
-              })
-
-              await sendEmail({
-                to: creator.email,
-                subject: emailContent.subject,
-                html: emailContent.html,
-                text: emailContent.text,
-              })
-
-              console.log(`✅ Placement request email sent to: ${creator.email}`)
-
-              // Create in-app notification
-              const { createNotification } = await import('@/lib/notifications/create-notification')
-              const formattedBudget = new Intl.NumberFormat('ru-RU', {
-                style: 'currency',
-                currency: 'RUB',
-                minimumFractionDigits: 0,
-              }).format(placement.budget)
-              
-              await createNotification({
-                userId: creator.id,
-                type: 'new_placement_request',
-                title: 'Новая заявка на размещение',
-                message: `Рекламодатель ${advertiserName} отправил вам заявку на размещение по кампании "${insertedCampaign.title}" с бюджетом ${formattedBudget}`,
-                campaignId: insertedCampaign.id,
-                placementId: placement.id,
-                actionUrl: requestUrl,
-              })
-
-              console.log(`✅ Notification created for creator`)
-            }
-          } catch (emailError) {
-            console.error('❌ Error sending notification:', emailError)
-            // Don't fail the request if email fails
-          }
-        }
-      }
-    }
-
-    // TODO: Create escrow transaction
-    // This will be implemented when Stripe Connect is integrated
-    // For now, we just mark the campaign as pending
-
-    // Delete any existing drafts for this user
-    await supabase
-      .from('campaigns')
-      .delete()
-      .eq('advertiser_id', user.id)
-      .eq('status', 'draft')
+    const campaigns = await response.json()
 
     return NextResponse.json({
       success: true,
-      campaign: insertedCampaign,
-      message: 'Campaign created successfully',
+      campaigns,
     })
   } catch (error: any) {
-    console.error('Error creating campaign:', error)
+    console.error('Error fetching campaigns:', error)
     return NextResponse.json(
-      { error: error.message || 'Failed to create campaign' },
+      { success: false, error: error.message || 'Failed to fetch campaigns' },
       { status: 500 }
     )
   }
 }
 
-export async function GET(request: NextRequest) {
+// POST /api/campaigns - Create new campaign
+export async function POST(request: Request) {
   try {
-    const supabase = await createClient()
-    
-    // Get authenticated user
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
+    const body = await request.json()
 
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized. Please log in.' },
-        { status: 401 }
-      )
+    // For now, use a hardcoded advertiser ID (same as channel owner)
+    // In production, this would come from authenticated session
+    const advertiserId = 'bf91c23b-7b52-4870-82f7-ba9ad852b49e'
+
+    const campaign = {
+      advertiser_id: advertiserId,
+      name: body.name,
+      goal: body.goal,
+      description: body.description || null,
+      geo: body.geo,
+      audience: body.audience,
+      budget: body.budget,
+      model: body.model,
+      utm: body.utm,
+      promo_codes: body.promo_codes || [],
+      status: 'draft',
+      integrations: body.integrations,
     }
 
-    // Fetch all campaigns for this user
-    const { data, error } = await supabase
-      .from('campaigns')
-      .select('*')
-      .eq('advertiser_id', user.id)
-      .order('created_at', { ascending: false })
+    const response = await fetch(`${supabaseUrl}/rest/v1/campaigns`, {
+      method: 'POST',
+      headers: {
+        apikey: supabaseKey,
+        Authorization: `Bearer ${supabaseKey}`,
+        'Content-Type': 'application/json',
+        Prefer: 'return=representation',
+      },
+      body: JSON.stringify(campaign),
+    })
 
-    if (error) throw error
+    if (!response.ok) {
+      const error = await response.text()
+      throw new Error(error || 'Failed to create campaign')
+    }
+
+    const [createdCampaign] = await response.json()
 
     return NextResponse.json({
       success: true,
-      campaigns: data || [],
+      campaign: createdCampaign,
     })
   } catch (error: any) {
-    console.error('Error fetching campaigns:', error)
+    console.error('Error creating campaign:', error)
     return NextResponse.json(
-      { error: error.message || 'Failed to fetch campaigns' },
+      { success: false, error: error.message || 'Failed to create campaign' },
       { status: 500 }
     )
   }

@@ -21,6 +21,9 @@ export function Header() {
             <Link href="/catalog" className="text-sm font-medium text-gray-700 hover:text-gray-900">
               Каталог
             </Link>
+            <Link href="/campaigns" className="text-sm font-medium text-gray-700 hover:text-gray-900">
+              Кампании
+            </Link>
             <Link href="/cases" className="text-sm font-medium text-gray-700 hover:text-gray-900">
               Кейсы
             </Link>
@@ -52,6 +55,9 @@ export function Header() {
           <div className="flex flex-col gap-4">
             <Link href="/catalog" className="text-sm font-medium">
               Каталог
+            </Link>
+            <Link href="/campaigns" className="text-sm font-medium">
+              Кампании
             </Link>
             <Link href="/cases" className="text-sm font-medium">
               Кейсы
