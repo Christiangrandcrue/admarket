@@ -41,7 +41,7 @@ interface Channel {
   created_at: string
 }
 
-export default function AdminChannelsPage() {
+function AdminChannelsContent() {
   const searchParams = useSearchParams()
   const statusFilter = searchParams.get('status') || 'all'
 
