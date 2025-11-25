@@ -14,9 +14,19 @@ export async function GET(request: NextRequest) {
     // Check authentication first
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     
+    console.log('Auth check:', { 
+      hasUser: !!user, 
+      userId: user?.id, 
+      userEmail: user?.email,
+      error: authError?.message 
+    })
+    
     if (authError || !user) {
       console.error('Auth error:', authError)
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ 
+        error: 'Unauthorized - Please log in again',
+        details: authError?.message 
+      }, { status: 401 })
     }
 
     // Check admin role
