@@ -96,13 +96,19 @@ export async function GET(request: NextRequest) {
     // Get financial stats
     const { data: campaignsFinancial, error: financialError } = await supabase
       .from('campaigns')
-      .select('total_budget, platform_fee')
-      .eq('payment_status', 'succeeded')
+      .select('budget')
+      .eq('status', 'active')
 
     if (financialError) throw financialError
 
-    const gmv = campaignsFinancial?.reduce((sum, c) => sum + (c.total_budget || 0), 0) || 0
-    const revenue = campaignsFinancial?.reduce((sum, c) => sum + (c.platform_fee || 0), 0) || 0
+    // budget is jsonb, extract total from it
+    const gmv = campaignsFinancial?.reduce((sum, c) => {
+      const budgetData = c.budget as any
+      return sum + (budgetData?.total || 0)
+    }, 0) || 0
+    
+    // Platform fee is 10% of GMV
+    const revenue = gmv * 0.1
 
     const { data: placements, error: placementsError } = await supabase
       .from('placements')
