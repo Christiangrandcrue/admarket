@@ -56,6 +56,7 @@ export default function CampaignPage({ params }: CampaignPageProps) {
   const [selectedChannels, setSelectedChannels] = useState<string[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [isLoading, setIsLoading] = useState(true)
+  const [isCreatingPlacements, setIsCreatingPlacements] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -114,6 +115,40 @@ export default function CampaignPage({ params }: CampaignPageProps) {
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`
     if (num >= 1000) return `${(num / 1000).toFixed(0)}K`
     return num.toString()
+  }
+
+  const handleCreatePlacements = async () => {
+    if (selectedChannels.length === 0) return
+
+    setIsCreatingPlacements(true)
+    try {
+      const response = await fetch('/api/placements', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          campaign_id: id,
+          channel_ids: selectedChannels,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to create placements')
+      }
+
+      const result = await response.json()
+
+      if (result.success) {
+        alert(`Успешно создано ${result.placements.length} размещений! Блогеры получили уведомления.`)
+        setSelectedChannels([])
+        // Redirect to placements view
+        window.location.href = `/campaigns/${id}/placements`
+      }
+    } catch (error) {
+      console.error('Error creating placements:', error)
+      alert('Ошибка создания размещений')
+    } finally {
+      setIsCreatingPlacements(false)
+    }
   }
 
   if (isLoading) {
@@ -353,12 +388,30 @@ export default function CampaignPage({ params }: CampaignPageProps) {
           {/* Action */}
           {selectedChannels.length > 0 && (
             <div className="mt-8 flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setSelectedChannels([])}>
+              <Button 
+                variant="outline" 
+                onClick={() => setSelectedChannels([])}
+                disabled={isCreatingPlacements}
+              >
                 Сбросить выбор
               </Button>
-              <Button size="lg" className="gap-2">
-                <Plus className="h-5 w-5" />
-                Создать размещения ({selectedChannels.length})
+              <Button 
+                size="lg" 
+                className="gap-2"
+                onClick={handleCreatePlacements}
+                disabled={isCreatingPlacements}
+              >
+                {isCreatingPlacements ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    Создание...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="h-5 w-5" />
+                    Создать размещения ({selectedChannels.length})
+                  </>
+                )}
               </Button>
             </div>
           )}
