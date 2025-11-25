@@ -75,7 +75,7 @@ export function CatalogClient({ channels: initialChannels }: CatalogClientProps)
     console.log('[CatalogClient] useEffect triggered')
     console.log('[CatalogClient] initialChannels:', initialChannels)
     
-    if (initialChannels) {
+    if (initialChannels && initialChannels.length > 0) {
       console.log('[CatalogClient] Using initialChannels, skipping fetch')
       return // Already have data from SSR
     }
