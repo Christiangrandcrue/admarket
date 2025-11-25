@@ -67,9 +67,14 @@ export function ChannelDetailClient({ channelId }: ChannelDetailClientProps) {
   useEffect(() => {
     async function loadChannel() {
       try {
+        console.log('[ChannelDetail] Loading channel:', channelId)
         const response = await fetch(`/api/channels/${channelId}`)
+        console.log('[ChannelDetail] Response status:', response.status)
         
         if (!response.ok) {
+          const errorText = await response.text()
+          console.error('[ChannelDetail] API error:', errorText)
+          
           if (response.status === 404) {
             setError('Канал не найден')
           } else {
@@ -80,14 +85,17 @@ export function ChannelDetailClient({ channelId }: ChannelDetailClientProps) {
         }
 
         const result = await response.json()
+        console.log('[ChannelDetail] API result:', result)
         
         if (result.success && result.channel) {
+          console.log('[ChannelDetail] Channel loaded successfully')
           setChannel(result.channel)
         } else {
+          console.error('[ChannelDetail] No channel in result')
           setError('Канал не найден')
         }
       } catch (err) {
-        console.error('Error loading channel:', err)
+        console.error('[ChannelDetail] Exception:', err)
         setError('Ошибка загрузки канала')
       } finally {
         setIsLoading(false)
