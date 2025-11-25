@@ -22,7 +22,13 @@ export async function GET(request: Request) {
     }
 
     if (status) {
-      url += `&status=eq.${status}`
+      // Support both single status and multiple statuses with in.() operator
+      // e.g., status=proposal or status=in.(booked,in_progress,posted)
+      if (status.startsWith('in.(')) {
+        url += `&status=${status}`
+      } else {
+        url += `&status=eq.${status}`
+      }
     }
 
     const response = await fetch(url, {
