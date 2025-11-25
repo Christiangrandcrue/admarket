@@ -24,6 +24,9 @@ export function Header() {
             <Link href="/campaigns" className="text-sm font-medium text-gray-700 hover:text-gray-900">
               Кампании
             </Link>
+            <Link href="/creator/proposals" className="text-sm font-medium text-gray-700 hover:text-gray-900">
+              Предложения
+            </Link>
             <Link href="/cases" className="text-sm font-medium text-gray-700 hover:text-gray-900">
               Кейсы
             </Link>
@@ -58,6 +61,9 @@ export function Header() {
             </Link>
             <Link href="/campaigns" className="text-sm font-medium">
               Кампании
+            </Link>
+            <Link href="/creator/proposals" className="text-sm font-medium">
+              Предложения
             </Link>
             <Link href="/cases" className="text-sm font-medium">
               Кейсы

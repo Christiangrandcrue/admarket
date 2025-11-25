@@ -3,16 +3,26 @@ import { NextResponse } from 'next/server'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
-// GET /api/placements - List placements for campaign
+// GET /api/placements - List placements for campaign or channels
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const campaignId = searchParams.get('campaign_id')
+    const channelIds = searchParams.get('channel_ids')
+    const status = searchParams.get('status')
 
     let url = `${supabaseUrl}/rest/v1/placements?select=*,channels(*),campaigns(*),formats(*)&order=created_at.desc`
     
     if (campaignId) {
       url += `&campaign_id=eq.${campaignId}`
+    }
+
+    if (channelIds) {
+      url += `&channel_id=in.(${channelIds})`
+    }
+
+    if (status) {
+      url += `&status=eq.${status}`
     }
 
     const response = await fetch(url, {
