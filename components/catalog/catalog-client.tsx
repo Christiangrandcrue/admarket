@@ -72,21 +72,33 @@ export function CatalogClient({ channels: initialChannels }: CatalogClientProps)
 
   // Load channels from API on client-side
   useEffect(() => {
+    console.log('[CatalogClient] useEffect triggered')
+    console.log('[CatalogClient] initialChannels:', initialChannels)
+    
     if (initialChannels && initialChannels.length > 0) {
+      console.log('[CatalogClient] Using initialChannels, skipping fetch')
       return // Already have data from SSR
     }
     
     async function loadChannels() {
       try {
+        console.log('[CatalogClient] Fetching from /api/channels...')
         const response = await fetch('/api/channels')
+        console.log('[CatalogClient] Response status:', response.status)
+        
         const result = await response.json()
+        console.log('[CatalogClient] Response data:', result)
         
         if (result.success && result.channels) {
+          console.log('[CatalogClient] Setting channels:', result.channels.length)
           setChannels(result.channels)
+        } else {
+          console.error('[CatalogClient] API returned error or no channels:', result)
         }
       } catch (error) {
-        console.error('Error loading channels:', error)
+        console.error('[CatalogClient] Error loading channels:', error)
       } finally {
+        console.log('[CatalogClient] Setting isLoading to false')
         setIsLoading(false)
       }
     }

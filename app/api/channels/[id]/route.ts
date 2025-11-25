@@ -1,36 +1,34 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params
-    
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
     if (!supabaseUrl || !supabaseKey) {
       return NextResponse.json(
-        { error: 'Supabase not configured' },
+        { success: false, error: 'Missing Supabase configuration' },
         { status: 500 }
       )
     }
 
-    // Получаем один канал по ID - только approved
-    const url = `${supabaseUrl}/rest/v1/channels?select=*&id=eq.${id}&moderation_status=eq.approved`
-
-    const response = await fetch(url, {
-      headers: {
-        apikey: supabaseKey,
-        Authorization: `Bearer ${supabaseKey}`,
-      },
-    })
+    const response = await fetch(
+      `${supabaseUrl}/rest/v1/channels?id=eq.${id}&select=*`,
+      {
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${supabaseKey}`,
+        },
+      }
+    )
 
     if (!response.ok) {
-      const error = await response.text()
       return NextResponse.json(
-        { error, status: response.status },
+        { success: false, error: 'Failed to fetch channel' },
         { status: response.status }
       )
     }
@@ -38,14 +36,21 @@ export async function GET(
     const channels = await response.json()
 
     if (!channels || channels.length === 0) {
-      return NextResponse.json({ error: 'Channel not found' }, { status: 404 })
+      return NextResponse.json(
+        { success: false, error: 'Channel not found' },
+        { status: 404 }
+      )
     }
 
     return NextResponse.json({
       success: true,
-      channel: channels[0],
+      channel: channels[0]
     })
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('Error fetching channel:', error)
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 500 }
+    )
   }
 }
