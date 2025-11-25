@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -262,5 +262,17 @@ export default function CreatorEarningsPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function CreatorEarningsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-purple-600"></div>
+      </div>
+    }>
+      <CreatorEarningsContent />
+    </Suspense>
   )
 }
