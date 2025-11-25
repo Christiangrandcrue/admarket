@@ -2,9 +2,11 @@ import { NextResponse } from 'next/server'
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
+    
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
@@ -16,7 +18,7 @@ export async function GET(
     }
 
     // Получаем один канал по ID - только approved
-    const url = `${supabaseUrl}/rest/v1/channels?select=*&id=eq.${params.id}&moderation_status=eq.approved`
+    const url = `${supabaseUrl}/rest/v1/channels?select=*&id=eq.${id}&moderation_status=eq.approved`
 
     const response = await fetch(url, {
       headers: {

@@ -4,11 +4,12 @@ import { notFound } from 'next/navigation'
 import { ChannelDetailClient } from '@/components/channel/channel-detail-client'
 
 interface ChannelPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default async function ChannelPage({ params }: ChannelPageProps) {
-  return <ChannelDetailClient channelId={params.id} />
+  const { id } = await params
+  return <ChannelDetailClient channelId={id} />
 }
