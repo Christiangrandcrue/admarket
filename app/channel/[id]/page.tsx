@@ -131,7 +131,7 @@ export default function ChannelPage({ params }: ChannelPageProps) {
                 Подписчики
               </div>
               <div className="text-2xl font-bold text-gray-900">
-                {formatNumber(channel.metrics?.followers || 0)}
+                {formatNumber((channel.metrics as any)?.subscribers || (channel.metrics as any)?.followers || 0)}
               </div>
             </div>
             <div>
@@ -140,7 +140,7 @@ export default function ChannelPage({ params }: ChannelPageProps) {
                 Просмотры
               </div>
               <div className="text-2xl font-bold text-gray-900">
-                {formatNumber(channel.metrics?.avg_views || 0)}
+                {formatNumber((channel.metrics as any)?.avg_views || 0)}
               </div>
             </div>
             <div>
@@ -149,7 +149,7 @@ export default function ChannelPage({ params }: ChannelPageProps) {
                 ER
               </div>
               <div className="text-2xl font-bold text-gray-900">
-                {channel.metrics?.er || 0}%
+                {(channel.metrics as any)?.engagement_rate || (channel.metrics as any)?.er || 0}%
               </div>
             </div>
           </div>
