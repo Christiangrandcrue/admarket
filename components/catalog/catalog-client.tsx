@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,7 +13,8 @@ import {
   Users,
   Eye,
   Heart,
-  ExternalLink
+  ExternalLink,
+  Loader2
 } from 'lucide-react'
 import type { Channel } from '@/types'
 
@@ -38,7 +39,7 @@ const topicLabels: Record<string, string> = {
 }
 
 interface CatalogClientProps {
-  channels: Channel[]
+  channels?: Channel[]
 }
 
 interface FilterState {
@@ -53,7 +54,9 @@ interface FilterState {
   sortOrder: 'asc' | 'desc'
 }
 
-export function CatalogClient({ channels }: CatalogClientProps) {
+export function CatalogClient({ channels: initialChannels }: CatalogClientProps) {
+  const [channels, setChannels] = useState<Channel[]>(initialChannels || [])
+  const [isLoading, setIsLoading] = useState(!initialChannels)
   const [searchQuery, setSearchQuery] = useState('')
   const [filters, setFilters] = useState<FilterState>({
     platforms: [],
@@ -66,6 +69,28 @@ export function CatalogClient({ channels }: CatalogClientProps) {
     sortBy: 'followers',
     sortOrder: 'desc',
   })
+
+  // Load channels from API on client-side
+  useEffect(() => {
+    if (initialChannels) return // Already have data from SSR
+    
+    async function loadChannels() {
+      try {
+        const response = await fetch('/api/channels')
+        const result = await response.json()
+        
+        if (result.success && result.channels) {
+          setChannels(result.channels)
+        }
+      } catch (error) {
+        console.error('Error loading channels:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    
+    loadChannels()
+  }, [initialChannels])
 
   const filteredAndSortedChannels = useMemo(() => {
     let result = channels.filter((channel) => {
@@ -141,6 +166,18 @@ export function CatalogClient({ channels }: CatalogClientProps) {
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`
     if (num >= 1000) return `${(num / 1000).toFixed(0)}K`
     return num.toString()
+  }
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="mx-auto mb-4 h-8 w-8 animate-spin text-gray-500" />
+          <p className="text-gray-700">Загрузка каналов...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
