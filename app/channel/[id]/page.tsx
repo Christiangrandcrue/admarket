@@ -1,6 +1,6 @@
-export const dynamic = 'force-dynamic'
+'use client'
 
-import { notFound } from 'next/navigation'
+import { use } from 'react'
 import { ChannelDetailClient } from '@/components/channel/channel-detail-client'
 
 interface ChannelPageProps {
@@ -9,7 +9,7 @@ interface ChannelPageProps {
   }>
 }
 
-export default async function ChannelPage({ params }: ChannelPageProps) {
-  const { id } = await params
+export default function ChannelPage({ params }: ChannelPageProps) {
+  const { id } = use(params)
   return <ChannelDetailClient channelId={id} />
 }
