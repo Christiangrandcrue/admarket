@@ -120,7 +120,7 @@ export function ChannelDetailClient({ channelId }: ChannelDetailClientProps) {
       <div className="flex min-h-[400px] items-center justify-center">
         <div className="text-center">
           <Loader2 className="mx-auto mb-4 h-8 w-8 animate-spin text-gray-500" />
-          <p className="text-gray-700">Загрузка канала...</p>
+          <p className="text-gray-700">[NEW VERSION v2] Загрузка канала {channelId}...</p>
         </div>
       </div>
     )
@@ -130,7 +130,10 @@ export function ChannelDetailClient({ channelId }: ChannelDetailClientProps) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">
-          <p className="mb-4 text-lg text-gray-800">{error || 'Канал не найден'}</p>
+          <p className="mb-4 text-lg text-gray-800">
+            [NEW VERSION] {error || 'Канал не найден - данные не загрузились'}
+          </p>
+          <p className="mb-4 text-sm text-gray-600">Channel ID: {channelId}</p>
           <Link href="/catalog">
             <Button variant="outline">
               <ArrowLeft className="mr-2 h-4 w-4" />
