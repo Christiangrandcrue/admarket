@@ -1,6 +1,8 @@
 import { Suspense } from 'react'
 import { TelegramConnect } from '@/components/settings/telegram-connect'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata = {
   title: 'Настройки - AdMarket',
   description: 'Настройки профиля и уведомлений',
