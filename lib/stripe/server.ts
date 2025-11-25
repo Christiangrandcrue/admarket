@@ -11,7 +11,7 @@ if (!process.env.STRIPE_SECRET_KEY) {
 
 // Initialize Stripe with API version
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2024-10-28.acacia',
+  apiVersion: '2024-06-20' as any,
   typescript: true,
 })
 
