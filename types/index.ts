@@ -86,6 +86,14 @@ export interface Format {
   sla_days: number
 }
 
+export interface CaseStudy {
+  client: string
+  objective: string
+  results: {
+    [key: string]: number | string
+  }
+}
+
 export interface Channel {
   id: string
   owner_user_id: string
@@ -94,12 +102,17 @@ export interface Channel {
   title: string
   description: string
   topics: Topic[]
+  blogger_name?: string
+  blogger_avatar?: string
+  blogger_bio?: string
+  case_studies?: CaseStudy[]
+  moderation_status?: 'pending' | 'approved' | 'rejected'
   metrics: ChannelMetrics
   audience: Audience
   formats: Format[]
   brand_safety: {
     verified: boolean
-    last_check_at: string
+    last_check_at?: string
   }
   rating: {
     score: number

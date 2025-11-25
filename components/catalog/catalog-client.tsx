@@ -229,25 +229,51 @@ export function CatalogClient({ channels: initialChannels }: CatalogClientProps)
               key={channel.id}
               className="rounded-2xl border border-gray-100 bg-white p-6 transition-shadow hover:shadow-lg"
             >
-              {/* Header */}
+              {/* Header with Blogger Photo */}
               <div className="mb-4">
-                <div className="mb-2 flex items-start justify-between">
+                <div className="mb-4 flex items-start gap-4">
+                  {/* Blogger Avatar */}
+                  {channel.blogger_avatar && (
+                    <img
+                      src={channel.blogger_avatar}
+                      alt={channel.blogger_name || channel.title}
+                      className="h-16 w-16 rounded-full object-cover ring-2 ring-gray-100"
+                    />
+                  )}
+                  
                   <div className="flex-1">
-                    <div className="mb-2 flex items-center gap-2">
+                    {/* Blogger Name */}
+                    {channel.blogger_name && (
+                      <p className="mb-1 text-sm font-medium text-gray-600">
+                        {channel.blogger_name}
+                      </p>
+                    )}
+                    
+                    {/* Channel Title */}
+                    <h3 className="mb-1 text-lg font-bold text-gray-900">{channel.title}</h3>
+                    
+                    {/* Platforms */}
+                    <div className="flex items-center gap-2">
                       {channel.platforms && Array.isArray(channel.platforms) && channel.platforms.map((platform: string) => (
-                        <span key={platform} className="text-2xl">
+                        <span key={platform} className="text-lg">
                           {platformIcons[platform] || '📱'}
                         </span>
                       ))}
+                      <span className="text-sm text-gray-600">{channel.handle}</span>
                     </div>
-                    <h3 className="mb-1 text-lg font-bold text-gray-900">{channel.title}</h3>
-                    <p className="text-sm text-gray-700">{channel.handle}</p>
                   </div>
+                  
                   <button className="rounded-lg p-2 hover:bg-gray-100">
                     <Heart className="h-5 w-5" />
                   </button>
                 </div>
 
+                {/* Blogger Bio */}
+                {channel.blogger_bio && (
+                  <p className="mb-3 text-sm text-gray-700">{channel.blogger_bio}</p>
+                )}
+
+                {/* Topics */}
                 <div className="flex flex-wrap gap-2">
                   {channel.topics && Array.isArray(channel.topics) && channel.topics.map((topic: string) => (
                     <Badge key={topic} variant="secondary">
