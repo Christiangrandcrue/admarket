@@ -321,66 +321,108 @@ export default function CampaignPage({ params }: CampaignPageProps) {
               const isSelected = selectedChannels.includes(channel.id)
               
               return (
-                <button
+                <div
                   key={channel.id}
-                  onClick={() => handleToggleChannel(channel.id)}
-                  className={`rounded-xl border-2 p-4 text-left transition-all ${
+                  className={`rounded-xl border-2 p-4 transition-all ${
                     isSelected
                       ? 'border-black bg-gray-50'
-                      : 'border-gray-200 hover:border-gray-300'
+                      : 'border-gray-200'
                   }`}
                 >
-                  <div className="mb-3 flex items-start gap-3">
-                    {channel.blogger_avatar && (
-                      <img
-                        src={channel.blogger_avatar}
-                        alt={channel.blogger_name || channel.title}
-                        className="h-12 w-12 rounded-full object-cover ring-2 ring-gray-100"
-                      />
-                    )}
-                    <div className="flex-1">
-                      {channel.blogger_name && (
-                        <p className="mb-1 text-sm font-medium text-gray-700">
-                          {channel.blogger_name}
-                        </p>
+                  <button
+                    onClick={() => handleToggleChannel(channel.id)}
+                    className="w-full text-left"
+                  >
+                    <div className="mb-3 flex items-start gap-3">
+                      {channel.blogger_avatar && (
+                        <img
+                          src={channel.blogger_avatar}
+                          alt={channel.blogger_name || channel.title}
+                          className="h-12 w-12 rounded-full object-cover ring-2 ring-gray-100"
+                        />
                       )}
-                      <h4 className="text-base font-semibold text-gray-900">
-                        {channel.title}
-                      </h4>
+                      <div className="flex-1">
+                        {channel.blogger_name && (
+                          <p className="mb-1 text-sm font-medium text-gray-700">
+                            {channel.blogger_name}
+                          </p>
+                        )}
+                        <h4 className="text-base font-semibold text-gray-900">
+                          {channel.title}
+                        </h4>
+                      </div>
+                      {isSelected && (
+                        <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-black" />
+                      )}
                     </div>
-                    {isSelected && (
-                      <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-black" />
-                    )}
-                  </div>
 
-                  <div className="mb-3 flex items-center gap-2 text-sm text-gray-600">
-                    {channel.platforms?.map((platform) => (
-                      <span key={platform}>{platformIcons[platform] || '📱'}</span>
-                    ))}
-                    <span>{channel.handle}</span>
-                  </div>
+                    <div className="mb-3 flex items-center gap-2 text-sm text-gray-600">
+                      {channel.platforms?.map((platform) => (
+                        <span key={platform}>{platformIcons[platform] || '📱'}</span>
+                      ))}
+                      <span>{channel.handle}</span>
+                    </div>
 
-                  <div className="grid grid-cols-3 gap-2 text-xs">
-                    <div>
-                      <div className="text-gray-600">Подписчики</div>
-                      <div className="font-semibold text-gray-900">
-                        {formatNumber((channel.metrics as any)?.subscribers || (channel.metrics as any)?.followers || 0)}
+                    <div className="grid grid-cols-3 gap-2 text-xs">
+                      <div>
+                        <div className="text-gray-600">Подписчики</div>
+                        <div className="font-semibold text-gray-900">
+                          {formatNumber((channel.metrics as any)?.subscribers || (channel.metrics as any)?.followers || 0)}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-gray-600">Просмотры</div>
+                        <div className="font-semibold text-gray-900">
+                          {formatNumber((channel.metrics as any)?.avg_views || 0)}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-gray-600">ER</div>
+                        <div className="font-semibold text-gray-900">
+                          {(channel.metrics as any)?.engagement_rate || (channel.metrics as any)?.er || 0}%
+                        </div>
                       </div>
                     </div>
-                    <div>
-                      <div className="text-gray-600">Просмотры</div>
-                      <div className="font-semibold text-gray-900">
-                        {formatNumber((channel.metrics as any)?.avg_views || 0)}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-gray-600">ER</div>
-                      <div className="font-semibold text-gray-900">
-                        {(channel.metrics as any)?.engagement_rate || (channel.metrics as any)?.er || 0}%
-                      </div>
-                    </div>
+                  </button>
+
+                  {/* Message Button */}
+                  <div className="mt-3 pt-3 border-t border-gray-200">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={async (e) => {
+                        e.stopPropagation()
+                        // Create or get conversation
+                        try {
+                          const response = await fetch('/api/conversations', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              advertiser_id: campaign?.advertiser_id,
+                              creator_id: channel.owner_user_id,
+                              campaign_id: campaign?.id,
+                              channel_id: channel.id,
+                              subject: `Обсуждение: ${campaign?.name}`,
+                            }),
+                          })
+                          
+                          if (response.ok) {
+                            const result = await response.json()
+                            if (result.success && result.conversation) {
+                              window.location.href = `/messages/${result.conversation.id}`
+                            }
+                          }
+                        } catch (error) {
+                          console.error('Error creating conversation:', error)
+                          alert('Не удалось создать диалог')
+                        }
+                      }}
+                    >
+                      💬 Написать сообщение
+                    </Button>
                   </div>
-                </button>
+                </div>
               )
             })}
           </div>

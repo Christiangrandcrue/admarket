@@ -24,20 +24,14 @@ export function Header() {
             <Link href="/campaigns" className="text-sm font-medium text-gray-700 hover:text-gray-900">
               Кампании
             </Link>
+            <Link href="/messages" className="text-sm font-medium text-gray-700 hover:text-gray-900">
+              Сообщения
+            </Link>
             <Link href="/creator/proposals" className="text-sm font-medium text-gray-700 hover:text-gray-900">
               Предложения
             </Link>
             <Link href="/creator/placements" className="text-sm font-medium text-gray-700 hover:text-gray-900">
               Мои размещения
-            </Link>
-            <Link href="/cases" className="text-sm font-medium text-gray-700 hover:text-gray-900">
-              Кейсы
-            </Link>
-            <Link href="/pricing" className="text-sm font-medium text-gray-700 hover:text-gray-900">
-              Цены
-            </Link>
-            <Link href="/blog" className="text-sm font-medium text-gray-700 hover:text-gray-900">
-              Блог
             </Link>
           </div>
         </div>
@@ -65,20 +59,14 @@ export function Header() {
             <Link href="/campaigns" className="text-sm font-medium">
               Кампании
             </Link>
+            <Link href="/messages" className="text-sm font-medium">
+              Сообщения
+            </Link>
             <Link href="/creator/proposals" className="text-sm font-medium">
               Предложения
             </Link>
             <Link href="/creator/placements" className="text-sm font-medium">
               Мои размещения
-            </Link>
-            <Link href="/cases" className="text-sm font-medium">
-              Кейсы
-            </Link>
-            <Link href="/pricing" className="text-sm font-medium">
-              Цены
-            </Link>
-            <Link href="/blog" className="text-sm font-medium">
-              Блог
             </Link>
             <div className="flex flex-col gap-2 pt-4">
               <Button variant="outline" size="sm" asChild>
