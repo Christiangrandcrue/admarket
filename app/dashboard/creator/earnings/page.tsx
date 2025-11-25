@@ -22,7 +22,7 @@ interface Transaction {
   date: string
 }
 
-export default function CreatorEarningsPage() {
+function CreatorEarningsContent() {
   const searchParams = useSearchParams()
   const onboardingStatus = searchParams.get('onboarding')
   
