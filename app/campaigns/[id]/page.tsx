@@ -17,6 +17,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
+import { StarRating } from '@/components/rating/star-rating'
 import type { Campaign, Channel } from '@/types'
 
 const GOAL_LABELS: Record<string, string> = {
@@ -58,6 +59,7 @@ export default function CampaignPage({ params }: CampaignPageProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [isCreatingPlacements, setIsCreatingPlacements] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [channelRatings, setChannelRatings] = useState<{ [key: string]: any }>({})
 
   useEffect(() => {
     async function loadData() {
@@ -82,6 +84,23 @@ export default function CampaignPage({ params }: CampaignPageProps) {
         const channelsResult = await channelsResponse.json()
         if (channelsResult.success && channelsResult.channels) {
           setChannels(channelsResult.channels)
+          
+          // Load ratings for each channel owner
+          const ratings: { [key: string]: any } = {}
+          for (const channel of channelsResult.channels) {
+            if (channel.owner_user_id) {
+              try {
+                const ratingResponse = await fetch(`/api/user-ratings?user_id=${channel.owner_user_id}`)
+                const ratingResult = await ratingResponse.json()
+                if (ratingResult.success && ratingResult.rating) {
+                  ratings[channel.id] = ratingResult.rating
+                }
+              } catch (err) {
+                console.error(`Failed to load rating for channel ${channel.id}:`, err)
+              }
+            }
+          }
+          setChannelRatings(ratings)
         }
       } catch (err) {
         setError('Ошибка загрузки данных')
@@ -363,7 +382,7 @@ export default function CampaignPage({ params }: CampaignPageProps) {
                       <span>{channel.handle}</span>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-2 text-xs">
+                    <div className="grid grid-cols-3 gap-2 text-xs mb-3">
                       <div>
                         <div className="text-gray-600">Подписчики</div>
                         <div className="font-semibold text-gray-900">
@@ -383,6 +402,19 @@ export default function CampaignPage({ params }: CampaignPageProps) {
                         </div>
                       </div>
                     </div>
+
+                    {/* Rating */}
+                    {channelRatings[channel.id] && channelRatings[channel.id].total_reviews > 0 && (
+                      <div className="flex items-center gap-2">
+                        <StarRating 
+                          rating={channelRatings[channel.id].overall_rating} 
+                          size="sm"
+                        />
+                        <span className="text-xs text-gray-600">
+                          ({channelRatings[channel.id].total_reviews})
+                        </span>
+                      </div>
+                    )}
                   </button>
 
                   {/* Message Button */}
