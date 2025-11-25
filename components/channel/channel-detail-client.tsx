@@ -178,10 +178,10 @@ export function ChannelDetailClient({ channelId }: ChannelDetailClientProps) {
                   <p className="text-lg text-gray-700">{channel.handle}</p>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="icon">
+                  <Button variant="outline" size="sm" className="h-10 w-10 p-0">
                     <Heart className="h-5 w-5" />
                   </Button>
-                  <Button variant="outline" size="icon">
+                  <Button variant="outline" size="sm" className="h-10 w-10 p-0">
                     <Share2 className="h-5 w-5" />
                   </Button>
                 </div>
