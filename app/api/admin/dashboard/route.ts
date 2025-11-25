@@ -8,19 +8,42 @@ import { createClient } from '@/lib/supabase/server'
 import { requireAdmin } from '@/lib/auth/admin-middleware'
 
 export async function GET(request: NextRequest) {
-  // Check admin access
-  const adminCheck = await requireAdmin(request)
-  if (adminCheck) return adminCheck
-
   try {
     const supabase = await createClient()
+
+    // Check authentication first
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    if (authError || !user) {
+      console.error('Auth error:', authError)
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Check admin role
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (userError) {
+      console.error('User lookup error:', userError)
+      return NextResponse.json({ error: 'Failed to verify user role' }, { status: 500 })
+    }
+
+    if (userData?.role !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden. Admin access required.' }, { status: 403 })
+    }
 
     // Get users stats
     const { data: users, error: usersError } = await supabase
       .from('users')
       .select('role, status')
 
-    if (usersError) throw usersError
+    if (usersError) {
+      console.error('Users query error:', usersError)
+      throw usersError
+    }
 
     const userStats = {
       total: users?.length || 0,
