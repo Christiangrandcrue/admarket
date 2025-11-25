@@ -207,7 +207,7 @@ export function ChannelDetailClient({ channelId }: ChannelDetailClientProps) {
                     Подписчики
                   </div>
                   <div className="text-2xl font-bold text-gray-900">
-                    {channel.metrics && formatNumber(channel.metrics.subscribers || 0)}
+                    {channel.metrics && formatNumber(channel.metrics.followers || 0)}
                   </div>
                 </div>
                 <div>
@@ -225,7 +225,7 @@ export function ChannelDetailClient({ channelId }: ChannelDetailClientProps) {
                     ER
                   </div>
                   <div className="text-2xl font-bold text-gray-900">
-                    {channel.metrics ? channel.metrics.engagement_rate : 0}%
+                    {channel.metrics ? channel.metrics.er : 0}%
                   </div>
                 </div>
               </div>
@@ -238,10 +238,9 @@ export function ChannelDetailClient({ channelId }: ChannelDetailClientProps) {
                     Верифицирован
                   </Badge>
                 )}
-                {channel.rating && channel.rating.overall >= 4.5 && (
-                  <Badge variant="secondary">⭐ {channel.rating.overall}</Badge>
+                {channel.rating && channel.rating.score >= 4.5 && (
+                  <Badge variant="secondary">⭐ {channel.rating.score}</Badge>
                 )}
-                {channel.is_featured && <Badge variant="secondary">🔥 Рекомендуем</Badge>}
               </div>
             </div>
 
@@ -312,16 +311,16 @@ export function ChannelDetailClient({ channelId }: ChannelDetailClientProps) {
                   <h3 className="mb-3 font-semibold text-gray-800">География</h3>
                   <div className="space-y-2">
                     {channel.audience?.geo &&
-                      Object.entries(channel.audience.geo).map(([country, percentage]) => (
-                        <div key={country}>
+                      channel.audience.geo.map((location) => (
+                        <div key={location.country}>
                           <div className="mb-1 flex justify-between text-sm">
-                            <span className="capitalize">{country}</span>
-                            <span className="font-semibold">{percentage}%</span>
+                            <span className="capitalize">{location.country}</span>
+                            <span className="font-semibold">{location.share}%</span>
                           </div>
                           <div className="h-2 overflow-hidden rounded-full bg-gray-100">
                             <div
                               className="h-full bg-green-500"
-                              style={{ width: `${percentage}%` }}
+                              style={{ width: `${location.share}%` }}
                             />
                           </div>
                         </div>
@@ -332,31 +331,33 @@ export function ChannelDetailClient({ channelId }: ChannelDetailClientProps) {
             </div>
 
             {/* Pricing */}
-            <div className="rounded-2xl border border-gray-100 bg-white p-8">
-              <h2 className="mb-6 text-xl font-bold text-gray-900">Прайс-лист</h2>
+            {channel.formats && channel.formats.length > 0 && (
+              <div className="rounded-2xl border border-gray-100 bg-white p-8">
+                <h2 className="mb-6 text-xl font-bold text-gray-900">Прайс-лист</h2>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                {channel.metrics?.pricing &&
-                  Object.entries(channel.metrics.pricing).map(([format, price]) => (
+                <div className="grid gap-4 md:grid-cols-2">
+                  {channel.formats.map((format) => (
                     <div
-                      key={format}
+                      key={format.id}
                       className="flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 p-4"
                     >
                       <div>
                         <div className="font-semibold text-gray-900 capitalize">
-                          {format === 'post' && 'Пост'}
-                          {format === 'story' && 'История'}
-                          {format === 'repost' && 'Репост'}
-                          {format === 'native' && 'Нативная реклама'}
+                          {format.name === 'post' && 'Пост'}
+                          {format.name === 'story' && 'История'}
+                          {format.name === 'short' && 'Короткое видео'}
+                          {format.name === 'video' && 'Видео'}
+                          {format.name === 'telegram_post' && 'Telegram пост'}
                         </div>
                       </div>
                       <div className="text-lg font-bold text-gray-900">
-                        {formatPrice(price as number)} ₽
+                        {formatPrice(format.price.value)} ₽
                       </div>
                     </div>
                   ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Sidebar */}
@@ -382,21 +383,17 @@ export function ChannelDetailClient({ channelId }: ChannelDetailClientProps) {
                   <span className="text-sm text-gray-700">Рейтинг</span>
                   <div className="flex items-center gap-1">
                     <span className="font-semibold text-gray-900">
-                      {channel.rating?.overall || 0}
+                      {channel.rating?.score || 0}
                     </span>
                     <span className="text-sm text-gray-600">
-                      ({channel.rating?.count || 0})
+                      ({channel.rating?.reviews_count || 0})
                     </span>
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-700">Brand Safety</span>
-                  <Badge
-                    variant={
-                      channel.brand_safety?.brand_risk === 'low' ? 'success' : 'secondary'
-                    }
-                  >
-                    {channel.brand_safety?.safety_score || 0}/10
+                  <Badge variant={channel.brand_safety?.verified ? 'success' : 'secondary'}>
+                    {channel.brand_safety?.verified ? 'Проверен' : 'Не проверен'}
                   </Badge>
                 </div>
                 <div className="flex items-center justify-between">
