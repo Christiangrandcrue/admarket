@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { CatalogClient } from '@/components/catalog/catalog-client'
 
 export default async function CatalogPage() {

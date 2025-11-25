@@ -312,3 +312,15 @@ export default function AdminChannelsPage() {
     </div>
   )
 }
+
+export default function AdminChannelsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-purple-600"></div>
+      </div>
+    }>
+      <AdminChannelsContent />
+    </Suspense>
+  )
+}
