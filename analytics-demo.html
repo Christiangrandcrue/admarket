@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Dashboard - Demo</title>
+    <script src="https://cdn.jsdelivr.net/npm/recharts@2.10.3/dist/Recharts.js"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-8">Analytics Dashboard - Графики</h1>
+        
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-semibold">Визуализация данных</h2>
+                <div class="flex gap-4">
+                    <select id="periodFilter" class="px-4 py-2 border rounded-lg">
+                        <option value="week">Неделя</option>
+                        <option value="month" selected>Месяц</option>
+                        <option value="quarter">Квартал</option>
+                        <option value="year">Год</option>
+                    </select>
+                    <button onclick="exportCharts()" class="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800">
+                        📥 Экспорт
+                    </button>
+                </div>
+            </div>
+            
+            <div id="charts" class="space-y-6">
+                <!-- График 1: Линейный -->
+                <div class="bg-gray-50 rounded-lg p-6">
+                    <h3 class="text-lg font-semibold mb-4">Динамика размещений</h3>
+                    <div style="position: relative; height: 350px;">
+                        <canvas id="timelineChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- График 2: Круговой -->
+                <div class="bg-gray-50 rounded-lg p-6">
+                    <h3 class="text-lg font-semibold mb-4">Распределение статусов</h3>
+                    <div style="position: relative; height: 350px; max-width: 500px; margin: 0 auto;">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- График 3: Столбчатый -->
+                <div class="bg-gray-50 rounded-lg p-6">
+                    <h3 class="text-lg font-semibold mb-4">Расходы по месяцам</h3>
+                    <div style="position: relative; height: 350px;">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <p class="text-blue-800">
+                <strong>Демонстрация:</strong> Это упрощённая HTML-версия Analytics Dashboard для быстрого просмотра. 
+                Полная версия с React компонентами доступна после успешного build Next.js проекта.
+            </p>
+        </div>
+    </div>
+    
+    <script>
+        // Данные для графиков
+        const dataByPeriod = {
+            week: {
+                labels: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
+                timeline: [4, 5, 6, 3, 7, 2, 3],
+                approved: [3, 4, 4, 2, 5, 2, 2],
+                completed: [2, 2, 3, 2, 3, 1, 1],
+                revenue: [2000, 2500, 3000, 2200, 3500, 1500, 1800]
+            },
+            month: {
+                labels: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн'],
+                timeline: [12, 15, 20, 18, 25, 30],
+                approved: [8, 10, 14, 16, 20, 25],
+                completed: [5, 7, 10, 12, 15, 18],
+                revenue: [15000, 18000, 25000, 22000, 30000, 35000]
+            },
+            quarter: {
+                labels: ['Янв', 'Фев', 'Мар'],
+                timeline: [40, 45, 50],
+                approved: [30, 32, 38],
+                completed: [20, 22, 25],
+                revenue: [45000, 54000, 75000]
+            },
+            year: {
+                labels: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'],
+                timeline: [120, 135, 150, 140, 160, 170, 155, 145, 165, 175, 180, 190],
+                approved: [90, 100, 115, 110, 125, 135, 120, 115, 130, 140, 145, 150],
+                completed: [60, 70, 80, 75, 85, 90, 82, 78, 88, 95, 98, 100],
+                revenue: [15000, 18000, 25000, 22000, 30000, 35000, 32000, 28000, 33000, 38000, 40000, 45000]
+            }
+        };
+        
+        const statusData = {
+            labels: ['Предложения', 'Забронировано', 'В работе', 'Опубликовано', 'Одобрено', 'Отклонено'],
+            values: [5, 8, 12, 15, 20, 3],
+            colors: ['#6b7280', '#3b82f6', '#f59e0b', '#10b981', '#059669', '#ef4444']
+        };
+        
+        let charts = {};
+        
+        function drawCharts(period) {
+            const data = dataByPeriod[period];
+            
+            // Timeline Chart (Линейный)
+            const timelineCtx = document.getElementById('timelineChart').getContext('2d');
+            if (charts.timeline) charts.timeline.destroy();
+            
+            charts.timeline = new Chart(timelineCtx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [
+                        {
+                            label: 'Создано',
+                            data: data.timeline,
+                            borderColor: '#8b5cf6',
+                            backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Одобрено',
+                            data: data.approved,
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Завершено',
+                            data: data.completed,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+            
+            // Status Chart (Круговой)
+            const statusCtx = document.getElementById('statusChart').getContext('2d');
+            if (charts.status) charts.status.destroy();
+            
+            charts.status = new Chart(statusCtx, {
+                type: 'pie',
+                data: {
+                    labels: statusData.labels,
+                    datasets: [{
+                        data: statusData.values,
+                        backgroundColor: statusData.colors
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+            
+            // Revenue Chart (Столбчатый)
+            const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+            if (charts.revenue) charts.revenue.destroy();
+            
+            charts.revenue = new Chart(revenueCtx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Расходы (₽)',
+                        data: data.revenue,
+                        backgroundColor: '#ef4444'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toLocaleString('ru-RU') + ' ₽';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function exportCharts() {
+            html2canvas(document.getElementById('charts')).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `analytics-charts_${Date.now()}.png`;
+                link.href = canvas.toDataURL();
+                link.click();
+                alert('✅ Графики экспортированы!');
+            });
+        }
+        
+        // Инициализация
+        document.getElementById('periodFilter').addEventListener('change', (e) => {
+            drawCharts(e.target.value);
+        });
+        
+        // Chart.js загрузка
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
+        script.onload = () => drawCharts('month');
+        document.head.appendChild(script);
+    </script>
+</body>
+</html>
