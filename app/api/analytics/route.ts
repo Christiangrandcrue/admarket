@@ -3,12 +3,87 @@ import { NextResponse } from 'next/server'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
+// Helper function to get last N months
+function getLastNMonths(n: number) {
+  const months = []
+  const monthNames = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек']
+  const now = new Date()
+  
+  for (let i = n - 1; i >= 0; i--) {
+    const date = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    months.push({
+      key: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`,
+      label: monthNames[date.getMonth()],
+      year: date.getFullYear(),
+      month: date.getMonth() + 1,
+    })
+  }
+  
+  return months
+}
+
+// Helper function to group placements by month
+function groupPlacementsByMonth(placements: any[], months: any[]) {
+  const timeline = months.map(m => ({
+    date: m.label,
+    created: 0,
+    approved: 0,
+    completed: 0,
+  }))
+
+  placements.forEach((p: any) => {
+    const createdDate = new Date(p.created_at)
+    const createdKey = `${createdDate.getFullYear()}-${String(createdDate.getMonth() + 1).padStart(2, '0')}`
+    const createdIndex = months.findIndex(m => m.key === createdKey)
+    
+    if (createdIndex !== -1) {
+      timeline[createdIndex].created++
+      
+      if (p.status === 'approved') {
+        timeline[createdIndex].completed++
+        // Count as approved in the same month for simplicity
+        timeline[createdIndex].approved++
+      } else if (['booked', 'in_progress', 'posted'].includes(p.status)) {
+        timeline[createdIndex].approved++
+      }
+    }
+  })
+
+  return timeline
+}
+
+// Helper function to calculate revenue/expense by month
+function calculateRevenueExpenseByMonth(placements: any[], months: any[]) {
+  const data = months.map(m => ({
+    month: m.label,
+    revenue: 0,
+    expense: 0,
+  }))
+
+  placements.forEach((p: any) => {
+    if (p.status === 'approved' && p.unit_price?.value) {
+      const createdDate = new Date(p.created_at)
+      const createdKey = `${createdDate.getFullYear()}-${String(createdDate.getMonth() + 1).padStart(2, '0')}`
+      const createdIndex = months.findIndex(m => m.key === createdKey)
+      
+      if (createdIndex !== -1) {
+        // Value is in cents/kopeks, keep as is for chart
+        data[createdIndex].revenue += p.unit_price.value * 100 // Convert to kopeks
+        data[createdIndex].expense += p.unit_price.value * 100
+      }
+    }
+  })
+
+  return data
+}
+
 // GET /api/analytics - Get analytics data
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('user_id')
     const userType = searchParams.get('user_type') // 'advertiser' or 'creator'
+    const includeCharts = searchParams.get('include_charts') === 'true' // Include chart data
 
     if (!userId || !userType) {
       return NextResponse.json(
@@ -23,6 +98,15 @@ export async function GET(request: Request) {
       reviews: {},
       messages: {},
       financial: {},
+    }
+
+    // Chart data will be added if requested
+    if (includeCharts) {
+      analytics.charts = {
+        placementsTimeline: [],
+        placementsStatus: [],
+        revenueExpense: [],
+      }
     }
 
     if (userType === 'advertiser') {
@@ -81,6 +165,27 @@ export async function GET(request: Request) {
           conversionRate: placements.length > 0
             ? (placements.filter((p: any) => p.status === 'approved').length / placements.length) * 100
             : 0,
+        }
+
+        // Generate chart data if requested
+        if (includeCharts) {
+          const months = getLastNMonths(6)
+          
+          // Timeline chart
+          analytics.charts.placementsTimeline = groupPlacementsByMonth(placements, months)
+          
+          // Status distribution chart
+          analytics.charts.placementsStatus = [
+            { name: 'Предложения', value: analytics.placements.proposal, color: '#6b7280' },
+            { name: 'Забронировано', value: analytics.placements.booked, color: '#3b82f6' },
+            { name: 'В работе', value: analytics.placements.in_progress, color: '#f59e0b' },
+            { name: 'Опубликовано', value: analytics.placements.posted, color: '#10b981' },
+            { name: 'Одобрено', value: analytics.placements.approved, color: '#059669' },
+            { name: 'Отклонено', value: analytics.placements.rejected, color: '#ef4444' },
+          ].filter(item => item.value > 0)
+          
+          // Revenue/Expense chart
+          analytics.charts.revenueExpense = calculateRevenueExpenseByMonth(placements, months)
         }
       }
 
@@ -180,6 +285,27 @@ export async function GET(request: Request) {
             completionRate: placements.length > 0
               ? (placements.filter((p: any) => p.status === 'approved').length / placements.filter((p: any) => p.status !== 'proposal' && p.status !== 'rejected').length) * 100
               : 0,
+          }
+
+          // Generate chart data if requested
+          if (includeCharts) {
+            const months = getLastNMonths(6)
+            
+            // Timeline chart
+            analytics.charts.placementsTimeline = groupPlacementsByMonth(placements, months)
+            
+            // Status distribution chart
+            analytics.charts.placementsStatus = [
+              { name: 'Предложения', value: analytics.placements.proposal, color: '#6b7280' },
+              { name: 'Забронировано', value: analytics.placements.booked, color: '#3b82f6' },
+              { name: 'В работе', value: analytics.placements.in_progress, color: '#f59e0b' },
+              { name: 'Опубликовано', value: analytics.placements.posted, color: '#10b981' },
+              { name: 'Одобрено', value: analytics.placements.approved, color: '#059669' },
+              { name: 'Отклонено', value: analytics.placements.rejected, color: '#ef4444' },
+            ].filter(item => item.value > 0)
+            
+            // Revenue/Expense chart
+            analytics.charts.revenueExpense = calculateRevenueExpenseByMonth(placements, months)
           }
         }
 

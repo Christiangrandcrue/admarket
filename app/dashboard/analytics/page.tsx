@@ -21,9 +21,25 @@ import { Badge } from '@/components/ui/badge'
 import { PlacementsTimelineChart } from '@/components/charts/placements-timeline-chart'
 import { PlacementsStatusChart } from '@/components/charts/placements-status-chart'
 import { RevenueExpenseChart } from '@/components/charts/revenue-expense-chart'
-import { PeriodFilter, type Period } from '@/components/charts/period-filter'
-import { exportChartToImage, exportMultipleChartsToImage } from '@/lib/chart-export'
-import { useToast } from '@/hooks/use-toast'
+
+interface ChartData {
+  placementsTimeline: Array<{
+    date: string
+    created: number
+    approved: number
+    completed: number
+  }>
+  placementsStatus: Array<{
+    name: string
+    value: number
+    color: string
+  }>
+  revenueExpense: Array<{
+    month: string
+    revenue: number
+    expense: number
+  }>
+}
 
 interface Analytics {
   campaigns?: {
@@ -64,6 +80,7 @@ interface Analytics {
     unreadCount: number
     activeConversations: number
   }
+  charts?: ChartData
 }
 
 export default function AnalyticsPage() {
@@ -73,18 +90,6 @@ export default function AnalyticsPage() {
   const [analytics, setAnalytics] = useState<Analytics | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [selectedPeriod, setSelectedPeriod] = useState<Period>('month')
-  const { toast } = useToast()
-
-  // Status data for pie chart
-  const placementsStatusData = [
-    { name: 'Предложения', value: analytics?.placements.proposal || 0, color: '#6b7280' },
-    { name: 'Забронировано', value: analytics?.placements.booked || 0, color: '#3b82f6' },
-    { name: 'В работе', value: analytics?.placements.in_progress || 0, color: '#f59e0b' },
-    { name: 'Опубликовано', value: analytics?.placements.posted || 0, color: '#10b981' },
-    { name: 'Одобрено', value: analytics?.placements.approved || 0, color: '#059669' },
-    { name: 'Отклонено', value: analytics?.placements.rejected || 0, color: '#ef4444' },
-  ]
 
   useEffect(() => {
     loadAnalytics()
@@ -95,8 +100,9 @@ export default function AnalyticsPage() {
       setLoading(true)
       setError(null)
 
+      // Load analytics with chart data
       const response = await fetch(
-        `/api/analytics?user_id=${currentUserId}&user_type=${currentUserType}`
+        `/api/analytics?user_id=${currentUserId}&user_type=${currentUserType}&include_charts=true`
       )
 
       if (!response.ok) {
@@ -121,135 +127,6 @@ export default function AnalyticsPage() {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(value)
-  }
-
-  // Generate data based on selected period
-  const getTimelineDataByPeriod = (period: Period) => {
-    switch (period) {
-      case 'week':
-        return [
-          { date: 'Пн', created: 4, approved: 3, completed: 2 },
-          { date: 'Вт', created: 5, approved: 4, completed: 2 },
-          { date: 'Ср', created: 6, approved: 4, completed: 3 },
-          { date: 'Чт', created: 3, approved: 2, completed: 2 },
-          { date: 'Пт', created: 7, approved: 5, completed: 3 },
-          { date: 'Сб', created: 2, approved: 2, completed: 1 },
-          { date: 'Вс', created: 3, approved: 2, completed: 1 },
-        ]
-      case 'quarter':
-        return [
-          { date: 'Янв', created: 40, approved: 30, completed: 20 },
-          { date: 'Фев', created: 45, approved: 32, completed: 22 },
-          { date: 'Мар', created: 50, approved: 38, completed: 25 },
-        ]
-      case 'year':
-        return [
-          { date: 'Янв', created: 120, approved: 90, completed: 60 },
-          { date: 'Фев', created: 135, approved: 100, completed: 70 },
-          { date: 'Мар', created: 150, approved: 115, completed: 80 },
-          { date: 'Апр', created: 140, approved: 110, completed: 75 },
-          { date: 'Май', created: 160, approved: 125, completed: 85 },
-          { date: 'Июн', created: 170, approved: 135, completed: 90 },
-          { date: 'Июл', created: 155, approved: 120, completed: 82 },
-          { date: 'Авг', created: 145, approved: 115, completed: 78 },
-          { date: 'Сен', created: 165, approved: 130, completed: 88 },
-          { date: 'Окт', created: 175, approved: 140, completed: 95 },
-          { date: 'Ноя', created: 180, approved: 145, completed: 98 },
-          { date: 'Дек', created: 190, approved: 150, completed: 100 },
-        ]
-      default: // month
-        return [
-          { date: 'Янв', created: 12, approved: 8, completed: 5 },
-          { date: 'Фев', created: 15, approved: 10, completed: 7 },
-          { date: 'Мар', created: 20, approved: 14, completed: 10 },
-          { date: 'Апр', created: 18, approved: 16, completed: 12 },
-          { date: 'Май', created: 25, approved: 20, completed: 15 },
-          { date: 'Июн', created: 30, approved: 25, completed: 18 },
-        ]
-    }
-  }
-
-  const getRevenueDataByPeriod = (period: Period) => {
-    const multiplier = period === 'week' ? 0.25 : period === 'quarter' ? 3 : period === 'year' ? 12 : 1
-    
-    switch (period) {
-      case 'week':
-        return [
-          { month: 'Пн', revenue: 2000000, expense: 1500000 },
-          { month: 'Вт', revenue: 2500000, expense: 2000000 },
-          { month: 'Ср', revenue: 3000000, expense: 2500000 },
-          { month: 'Чт', revenue: 2200000, expense: 1800000 },
-          { month: 'Пт', revenue: 3500000, expense: 3000000 },
-          { month: 'Сб', revenue: 1500000, expense: 1200000 },
-          { month: 'Вс', revenue: 1800000, expense: 1500000 },
-        ]
-      case 'quarter':
-        return [
-          { month: 'Янв', revenue: 45000000, expense: 36000000 },
-          { month: 'Фев', revenue: 54000000, expense: 42000000 },
-          { month: 'Мар', revenue: 75000000, expense: 60000000 },
-        ]
-      case 'year':
-        return [
-          { month: 'Янв', revenue: 15000000, expense: 12000000 },
-          { month: 'Фев', revenue: 18000000, expense: 14000000 },
-          { month: 'Мар', revenue: 25000000, expense: 20000000 },
-          { month: 'Апр', revenue: 22000000, expense: 18000000 },
-          { month: 'Май', revenue: 30000000, expense: 25000000 },
-          { month: 'Июн', revenue: 35000000, expense: 28000000 },
-          { month: 'Июл', revenue: 32000000, expense: 26000000 },
-          { month: 'Авг', revenue: 28000000, expense: 23000000 },
-          { month: 'Сен', revenue: 33000000, expense: 27000000 },
-          { month: 'Окт', revenue: 38000000, expense: 30000000 },
-          { month: 'Ноя', revenue: 40000000, expense: 32000000 },
-          { month: 'Дек', revenue: 45000000, expense: 35000000 },
-        ]
-      default: // month
-        return [
-          { month: 'Янв', revenue: 15000000, expense: 12000000 },
-          { month: 'Фев', revenue: 18000000, expense: 14000000 },
-          { month: 'Мар', revenue: 25000000, expense: 20000000 },
-          { month: 'Апр', revenue: 22000000, expense: 18000000 },
-          { month: 'Май', revenue: 30000000, expense: 25000000 },
-          { month: 'Июн', revenue: 35000000, expense: 28000000 },
-        ]
-    }
-  }
-
-  // Export handlers
-  const handleExportChart = async (chartId: string, chartName: string) => {
-    try {
-      await exportChartToImage(chartId, chartName)
-      toast({
-        title: 'Успешно',
-        description: 'График экспортирован в изображение',
-      })
-    } catch (error) {
-      toast({
-        title: 'Ошибка',
-        description: 'Не удалось экспортировать график',
-        variant: 'destructive',
-      })
-    }
-  }
-
-  const handleExportAllCharts = async () => {
-    try {
-      await exportMultipleChartsToImage(
-        ['placements-timeline-chart', 'placements-status-chart', 'revenue-expense-chart'],
-        'analytics-charts'
-      )
-      toast({
-        title: 'Успешно',
-        description: 'Все графики экспортированы в одно изображение',
-      })
-    } catch (error) {
-      toast({
-        title: 'Ошибка',
-        description: 'Не удалось экспортировать графики',
-        variant: 'destructive',
-      })
-    }
   }
 
   if (loading) {
@@ -556,38 +433,27 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Charts Section */}
-        <div className="mt-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">Визуализация данных</h3>
-            <div className="flex items-center gap-4">
-              <PeriodFilter
-                selectedPeriod={selectedPeriod}
-                onPeriodChange={setSelectedPeriod}
-                onExport={handleExportAllCharts}
-                showExport={true}
+        {analytics.charts && (
+          <div className="mt-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-6">Визуализация данных</h3>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <PlacementsTimelineChart 
+                data={analytics.charts.placementsTimeline}
+              />
+              <PlacementsStatusChart 
+                data={analytics.charts.placementsStatus}
+              />
+            </div>
+
+            <div className="mt-6">
+              <RevenueExpenseChart
+                data={analytics.charts.revenueExpense}
+                userType={currentUserType}
               />
             </div>
           </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <PlacementsTimelineChart 
-              data={getTimelineDataByPeriod(selectedPeriod)}
-              id="placements-timeline-chart"
-            />
-            <PlacementsStatusChart 
-              data={placementsStatusData.filter((item) => item.value > 0)}
-              id="placements-status-chart"
-            />
-          </div>
-
-          <div className="mt-6">
-            <RevenueExpenseChart
-              data={getRevenueDataByPeriod(selectedPeriod)}
-              userType={currentUserType}
-              id="revenue-expense-chart"
-            />
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Reviews Stats */}
