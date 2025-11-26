@@ -21,6 +21,7 @@ interface RevenueExpenseChartProps {
   title?: string
   description?: string
   userType: 'advertiser' | 'creator'
+  id?: string
 }
 
 export function RevenueExpenseChart({
@@ -28,6 +29,7 @@ export function RevenueExpenseChart({
   title,
   description,
   userType,
+  id = 'revenue-expense-chart',
 }: RevenueExpenseChartProps) {
   const defaultTitle =
     userType === 'advertiser' ? 'Расходы по месяцам' : 'Доходы по месяцам'
@@ -37,7 +39,7 @@ export function RevenueExpenseChart({
       : 'Динамика доходов от размещений'
 
   return (
-    <Card>
+    <Card id={id}>
       <CardHeader>
         <CardTitle>{title || defaultTitle}</CardTitle>
         <CardDescription>{description || defaultDescription}</CardDescription>

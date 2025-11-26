@@ -21,15 +21,17 @@ interface PlacementsTimelineChartProps {
   }>
   title?: string
   description?: string
+  id?: string
 }
 
 export function PlacementsTimelineChart({
   data,
   title = 'Динамика размещений',
   description = 'Статистика размещений по времени',
+  id = 'placements-timeline-chart',
 }: PlacementsTimelineChartProps) {
   return (
-    <Card>
+    <Card id={id}>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
         <CardDescription>{description}</CardDescription>

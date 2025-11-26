@@ -18,6 +18,7 @@ interface PlacementsStatusChartProps {
   }>
   title?: string
   description?: string
+  id?: string
 }
 
 const RADIAN = Math.PI / 180
@@ -52,9 +53,10 @@ export function PlacementsStatusChart({
   data,
   title = 'Распределение статусов',
   description = 'Процентное соотношение размещений по статусам',
+  id = 'placements-status-chart',
 }: PlacementsStatusChartProps) {
   return (
-    <Card>
+    <Card id={id}>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
