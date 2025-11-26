@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, use } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Send,
@@ -59,12 +59,12 @@ interface Conversation {
 }
 
 interface ChatPageProps {
-  params: Promise<{ id: string }>
+  params: { id: string }
 }
 
 export default function ChatPage({ params }: ChatPageProps) {
   const router = useRouter()
-  const { id: conversationId } = use(params)
+  const { id: conversationId } = params
   const currentUserId = 'bf91c23b-7b52-4870-82f7-ba9ad852b49e'
 
   const [conversation, setConversation] = useState<Conversation | null>(null)
