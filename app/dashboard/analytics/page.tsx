@@ -18,6 +18,9 @@ import {
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { PlacementsTimelineChart } from '@/components/charts/placements-timeline-chart'
+import { PlacementsStatusChart } from '@/components/charts/placements-status-chart'
+import { RevenueExpenseChart } from '@/components/charts/revenue-expense-chart'
 
 interface Analytics {
   campaigns?: {
@@ -67,6 +70,34 @@ export default function AnalyticsPage() {
   const [analytics, setAnalytics] = useState<Analytics | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // Mock data for charts - TODO: Replace with real API data
+  const placementsTimelineData = [
+    { date: 'Янв', created: 12, approved: 8, completed: 5 },
+    { date: 'Фев', created: 15, approved: 10, completed: 7 },
+    { date: 'Мар', created: 20, approved: 14, completed: 10 },
+    { date: 'Апр', created: 18, approved: 16, completed: 12 },
+    { date: 'Май', created: 25, approved: 20, completed: 15 },
+    { date: 'Июн', created: 30, approved: 25, completed: 18 },
+  ]
+
+  const placementsStatusData = [
+    { name: 'Предложения', value: analytics?.placements.proposal || 0, color: '#6b7280' },
+    { name: 'Забронировано', value: analytics?.placements.booked || 0, color: '#3b82f6' },
+    { name: 'В работе', value: analytics?.placements.in_progress || 0, color: '#f59e0b' },
+    { name: 'Опубликовано', value: analytics?.placements.posted || 0, color: '#10b981' },
+    { name: 'Одобрено', value: analytics?.placements.approved || 0, color: '#059669' },
+    { name: 'Отклонено', value: analytics?.placements.rejected || 0, color: '#ef4444' },
+  ]
+
+  const revenueExpenseData = [
+    { month: 'Янв', revenue: 15000000, expense: 12000000 },
+    { month: 'Фев', revenue: 18000000, expense: 14000000 },
+    { month: 'Мар', revenue: 25000000, expense: 20000000 },
+    { month: 'Апр', revenue: 22000000, expense: 18000000 },
+    { month: 'Май', revenue: 30000000, expense: 25000000 },
+    { month: 'Июн', revenue: 35000000, expense: 28000000 },
+  ]
 
   useEffect(() => {
     loadAnalytics()
@@ -406,6 +437,19 @@ export default function AnalyticsPage() {
               </div>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+          <PlacementsTimelineChart data={placementsTimelineData} />
+          <PlacementsStatusChart data={placementsStatusData.filter((item) => item.value > 0)} />
+        </div>
+
+        <div className="mt-6">
+          <RevenueExpenseChart
+            data={revenueExpenseData}
+            userType={currentUserType}
+          />
         </div>
       </div>
 
