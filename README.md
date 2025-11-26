@@ -14,16 +14,19 @@
 
 ## URLs
 
-- **Development**: https://3000-i1140fafr5k1k5nl567od-b237eb32.sandbox.novita.ai
-- **Каталог**: https://3000-i1140fafr5k1k5nl567od-b237eb32.sandbox.novita.ai/catalog
-- **Пример канала**: https://3000-i1140fafr5k1k5nl567od-b237eb32.sandbox.novita.ai/channel/8472a138-6148-45cb-a249-15d0966ee8ab
-- **Мастер кампаний**: https://3000-i1140fafr5k1k5nl567od-b237eb32.sandbox.novita.ai/campaign/create
-- **Список кампаний (Advertiser)**: https://3000-i1140fafr5k1k5nl567od-b237eb32.sandbox.novita.ai/dashboard/campaigns
-- **Creator Dashboard**: https://3000-i1140fafr5k1k5nl567od-b237eb32.sandbox.novita.ai/dashboard/creator
-- **Входящие заявки (Creator)**: https://3000-i1140fafr5k1k5nl567od-b237eb32.sandbox.novita.ai/dashboard/creator/requests
-- **Вход**: https://3000-i1140fafr5k1k5nl567od-b237eb32.sandbox.novita.ai/auth/login
-- **Регистрация**: https://3000-i1140fafr5k1k5nl567od-b237eb32.sandbox.novita.ai/auth/register
-- **GitHub**: (будет добавлен после push)
+- **🌐 Production**: https://ads.synthnova.me
+- **GitHub**: https://github.com/Christiangrandcrue/admarket
+- **Vercel Dashboard**: https://vercel.com/synth-nova-influencers-projects/webapp
+
+### Основные разделы
+- **Главная**: https://ads.synthnova.me
+- **Каталог**: https://ads.synthnova.me/catalog
+- **Мастер кампаний**: https://ads.synthnova.me/campaign/create
+- **Dashboard (Advertiser)**: https://ads.synthnova.me/dashboard
+- **Creator Dashboard**: https://ads.synthnova.me/dashboard/creator
+- **Analytics Dashboard**: https://ads.synthnova.me/dashboard/analytics
+- **Вход**: https://ads.synthnova.me/auth/login
+- **Регистрация**: https://ads.synthnova.me/auth/register
 
 ## Технологический стек
 
