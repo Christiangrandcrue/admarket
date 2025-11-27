@@ -241,7 +241,8 @@ export default function RegisterPage() {
               </div>
             )}
 
-            {/* OAuth Button */}
+            {/* OAuth Button - Temporarily disabled until Google OAuth is configured in Supabase */}
+            {/* 
             <div className="mb-6">
               <Button
                 type="button"
@@ -280,6 +281,7 @@ export default function RegisterPage() {
                 <span className="bg-white px-4 text-gray-500">или с email</span>
               </div>
             </div>
+            */}
 
             {/* Registration Form */}
             <form onSubmit={handleRegister} className="space-y-4">
