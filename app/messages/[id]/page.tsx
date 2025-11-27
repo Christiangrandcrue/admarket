@@ -114,7 +114,7 @@ export default function ChatPage({ params }: ChatPageProps) {
       setLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/messages?conversation_id=${conversationId}`)
+      const response = await fetch(`/api/conversations/${conversationId}/messages`)
 
       if (!response.ok) {
         throw new Error('Не удалось загрузить сообщения')
@@ -160,11 +160,10 @@ export default function ChatPage({ params }: ChatPageProps) {
       const isAdvertiser = conversation.advertiser_id === currentUserId
       const senderType = isAdvertiser ? 'advertiser' : 'creator'
 
-      const response = await fetch('/api/messages', {
+      const response = await fetch(`/api/conversations/${conversationId}/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          conversation_id: conversationId,
           sender_id: currentUserId,
           sender_type: senderType,
           content: newMessage.trim(),
