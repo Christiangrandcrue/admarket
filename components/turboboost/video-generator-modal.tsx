@@ -131,6 +131,33 @@ export function VideoGeneratorModal({ isOpen, onClose, onVideoGenerated }: Video
             setVideoUrl(task.video_url)
             setGenerating(false)
 
+            // Save video to database
+            try {
+              console.log('[VideoGenerator] Saving video to database...')
+              const saveRes = await fetch('/api/creator/videos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  title: topic,
+                  prompt: `Cinematic ${style} view of ${topic}, professional quality, ${duration} seconds`,
+                  style: style,
+                  duration: parseInt(duration),
+                  task_id: newTaskId?.toString(),
+                  turboboost_video_url: task.video_url,
+                  status: 'ready',
+                  generated_at: new Date().toISOString()
+                })
+              })
+              const saveData = await saveRes.json()
+              if (saveData.success) {
+                console.log('[VideoGenerator] ✅ Video saved to database:', saveData.video.id)
+              } else {
+                console.error('[VideoGenerator] Failed to save video:', saveData.error)
+              }
+            } catch (saveError) {
+              console.error('[VideoGenerator] Error saving video to database:', saveError)
+            }
+
             if (onVideoGenerated && task.video_url) {
               onVideoGenerated(task.video_url)
             }
