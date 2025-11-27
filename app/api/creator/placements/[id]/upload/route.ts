@@ -55,7 +55,7 @@ export async function POST(
           id,
           title,
           advertiser_id,
-          advertiser:users!campaigns_advertiser_id_fkey(email, full_name)
+          advertiser:users!campaigns_advertiser_id_fkey(id, email)
         )
       `)
       .eq('id', id)
@@ -115,11 +115,11 @@ export async function POST(
 
     // Send email notification to advertiser
     const campaign = placement.campaign as any
-    const advertiser = campaign?.advertiser as unknown as { email: string; full_name: string } | null
+    const advertiser = campaign?.advertiser as unknown as { id: string; email: string } | null
 
     if (advertiser?.email) {
       try {
-        const advertiserName = advertiser.full_name || 'Рекламодатель'
+        const advertiserName = advertiser.email.split('@')[0] || 'Рекламодатель'
         const campaignUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/campaigns/${campaign.id}`
 
         const emailContent = {

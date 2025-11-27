@@ -105,8 +105,7 @@ export async function GET(request: NextRequest) {
           landing_url,
           advertiser:users!campaigns_advertiser_id_fkey(
             id,
-            email,
-            full_name
+            email
           )
         )
       `)

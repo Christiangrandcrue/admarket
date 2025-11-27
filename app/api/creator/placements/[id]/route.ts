@@ -108,18 +108,18 @@ export async function PATCH(
         id,
         title,
         advertiser_id,
-        advertiser:users!campaigns_advertiser_id_fkey(email, full_name)
+        advertiser:users!campaigns_advertiser_id_fkey(id, email)
       `)
       .eq('id', placement.campaign_id)
       .single()
 
     // Send email notification to advertiser
     // Type assertion: advertiser should be a single object, not array
-    const advertiser = campaignData?.advertiser as unknown as { email: string; full_name: string } | null
+    const advertiser = campaignData?.advertiser as unknown as { id: string; email: string } | null
     
     if (campaignData && advertiser?.email) {
       try {
-        const advertiserName = advertiser.full_name || 'Рекламодатель'
+        const advertiserName = advertiser.email.split('@')[0] || 'Рекламодатель'
         const campaignUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/advertiser/campaigns/${campaignData.id}`
 
         if (action === 'accept') {
@@ -227,8 +227,7 @@ export async function GET(
           *,
           advertiser:users!campaigns_advertiser_id_fkey(
             id,
-            email,
-            full_name
+            email
           )
         )
       `)
