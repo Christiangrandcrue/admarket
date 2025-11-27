@@ -149,10 +149,23 @@ export default function ChatPage({ params }: ChatPageProps) {
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!newMessage.trim() || sending || !conversation) {
+    if (!newMessage.trim()) {
+      console.log('Empty message, skipping')
       return
     }
 
+    if (sending) {
+      console.log('Already sending, skipping')
+      return
+    }
+
+    if (!conversation) {
+      console.log('No conversation loaded')
+      alert('Диалог не загружен. Пожалуйста, обновите страницу.')
+      return
+    }
+
+    console.log('Sending message...', { conversationId, currentUserId })
     setSending(true)
 
     try {
@@ -160,21 +173,31 @@ export default function ChatPage({ params }: ChatPageProps) {
       const isAdvertiser = conversation.advertiser_id === currentUserId
       const senderType = isAdvertiser ? 'advertiser' : 'creator'
 
+      const payload = {
+        sender_id: currentUserId,
+        sender_type: senderType,
+        content: newMessage.trim(),
+      }
+
+      console.log('Payload:', payload)
+
       const response = await fetch(`/api/conversations/${conversationId}/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sender_id: currentUserId,
-          sender_type: senderType,
-          content: newMessage.trim(),
-        }),
+        body: JSON.stringify(payload),
       })
 
+      console.log('Response status:', response.status)
+
       if (!response.ok) {
-        throw new Error('Не удалось отправить сообщение')
+        const errorData = await response.json().catch(() => ({}))
+        console.error('Error response:', errorData)
+        throw new Error(errorData.error || 'Не удалось отправить сообщение')
       }
 
       const result = await response.json()
+      console.log('Result:', result)
+
       if (result.success) {
         // Add message to list
         setMessages((prev) => [...prev, result.message])
@@ -184,9 +207,12 @@ export default function ChatPage({ params }: ChatPageProps) {
         if (textareaRef.current) {
           textareaRef.current.style.height = 'auto'
         }
+        
+        console.log('Message sent successfully!')
       }
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Произошла ошибка')
+      console.error('Send message error:', err)
+      alert(err instanceof Error ? err.message : 'Произошла ошибка при отправке сообщения')
     } finally {
       setSending(false)
     }
