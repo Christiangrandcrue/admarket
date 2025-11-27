@@ -10,6 +10,10 @@ export const revalidate = 0
 // POST /api/turboboost/auth - Authenticate with TurboBoost
 export async function POST(request: NextRequest) {
   try {
+    console.log('[TurboBoost Auth] Starting authentication...')
+    console.log('[TurboBoost Auth] API URL:', TURBOBOOST_API_URL)
+    console.log('[TurboBoost Auth] Email:', TURBOBOOST_EMAIL)
+    
     const response = await fetch(`${TURBOBOOST_API_URL}/auth/login`, {
       method: 'POST',
       headers: {
@@ -21,12 +25,15 @@ export async function POST(request: NextRequest) {
       }),
     })
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}))
-      throw new Error(error.message || 'TurboBoost authentication failed')
-    }
+    console.log('[TurboBoost Auth] Response status:', response.status)
+    console.log('[TurboBoost Auth] Response ok:', response.ok)
 
     const data = await response.json()
+    console.log('[TurboBoost Auth] Response data:', JSON.stringify(data))
+
+    if (!response.ok || !data.success) {
+      throw new Error(data.error || data.message || 'TurboBoost authentication failed')
+    }
 
     return NextResponse.json({
       success: true,
@@ -34,7 +41,8 @@ export async function POST(request: NextRequest) {
       user: data.user,
     })
   } catch (error: any) {
-    console.error('TurboBoost auth error:', error)
+    console.error('[TurboBoost Auth] Error:', error)
+    console.error('[TurboBoost Auth] Error message:', error.message)
     return NextResponse.json(
       {
         success: false,
