@@ -112,7 +112,29 @@ export async function GET(request: NextRequest) {
       .in('channel_id', channelIds)
       .order('created_at', { ascending: false })
 
-    if (placementsError) throw placementsError
+    if (placementsError) {
+      console.error('Placements error:', placementsError)
+      // Return empty data instead of throwing
+      return NextResponse.json({
+        success: true,
+        placements: [],
+        grouped: {
+          pending: [],
+          accepted: [],
+          rejected: [],
+          completed: [],
+        },
+        stats: {
+          total: 0,
+          pending: 0,
+          accepted: 0,
+          rejected: 0,
+          completed: 0,
+        },
+        source: 'fallback_placements_error',
+        error_message: placementsError.message,
+      })
+    }
 
     // Group by status
     const pending = placements?.filter((p) => p.status === 'pending') || []
