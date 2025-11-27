@@ -30,8 +30,13 @@ export default function HomePage() {
           </p>
           <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Button size="lg" asChild>
+              <Link href="/catalog">
+                Открыть каталог <ArrowRight className="ml-2" size={20} />
+              </Link>
+            </Button>
+            <Button size="lg" variant="outline" asChild>
               <Link href="/auth/register?role=advertiser">
-                Запустить кампанию <ArrowRight className="ml-2" size={20} />
+                Запустить кампанию
               </Link>
             </Button>
             <Button size="lg" variant="outline" asChild>

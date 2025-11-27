@@ -18,20 +18,17 @@ export function Header() {
           </Link>
           
           <div className="hidden items-center gap-6 md:flex">
+            <Link href="/catalog" className="text-sm font-medium text-gray-700 hover:text-gray-900">
+              Каталог блогеров
+            </Link>
+            <Link href="/dashboard/campaigns" className="text-sm font-medium text-gray-700 hover:text-gray-900">
+              Мои кампании
+            </Link>
             <Link href="/dashboard/analytics" className="text-sm font-medium text-gray-700 hover:text-gray-900">
               Аналитика
             </Link>
-            <Link href="/campaigns" className="text-sm font-medium text-gray-700 hover:text-gray-900">
-              Кампании
-            </Link>
             <Link href="/messages" className="text-sm font-medium text-gray-700 hover:text-gray-900">
               Сообщения
-            </Link>
-            <Link href="/creator/proposals" className="text-sm font-medium text-gray-700 hover:text-gray-900">
-              Предложения
-            </Link>
-            <Link href="/creator/placements" className="text-sm font-medium text-gray-700 hover:text-gray-900">
-              Мои размещения
             </Link>
           </div>
         </div>
@@ -53,20 +50,17 @@ export function Header() {
       {mobileMenuOpen && (
         <div className="border-t border-gray-100 bg-white px-6 py-4 md:hidden">
           <div className="flex flex-col gap-4">
+            <Link href="/catalog" className="text-sm font-medium">
+              Каталог блогеров
+            </Link>
+            <Link href="/dashboard/campaigns" className="text-sm font-medium">
+              Мои кампании
+            </Link>
             <Link href="/dashboard/analytics" className="text-sm font-medium">
               Аналитика
             </Link>
-            <Link href="/campaigns" className="text-sm font-medium">
-              Кампании
-            </Link>
             <Link href="/messages" className="text-sm font-medium">
               Сообщения
-            </Link>
-            <Link href="/creator/proposals" className="text-sm font-medium">
-              Предложения
-            </Link>
-            <Link href="/creator/placements" className="text-sm font-medium">
-              Мои размещения
             </Link>
             <div className="flex flex-col gap-2 pt-4">
               <Button variant="outline" size="sm" asChild>
