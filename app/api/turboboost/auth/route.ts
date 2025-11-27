@@ -1,14 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-// Hardcoded credentials as fallback (will be overridden by env vars when added)
-const TURBOBOOST_API_URL = process.env.TURBOBOOST_API_URL || 'https://turboboost-portal.pages.dev/api'
-const TURBOBOOST_EMAIL = process.env.TURBOBOOST_EMAIL || 'inbe@ya.ru'
-const TURBOBOOST_PASSWORD = process.env.TURBOBOOST_PASSWORD || 'rewfdsvcx5'
-
-// Force hardcoded values if env vars are empty or undefined
-const API_URL = TURBOBOOST_API_URL || 'https://turboboost-portal.pages.dev/api'
-const EMAIL = TURBOBOOST_EMAIL || 'inbe@ya.ru'
-const PASSWORD = TURBOBOOST_PASSWORD || 'rewfdsvcx5'
+// Hardcoded credentials (will work immediately, can be overridden by env vars later)
+const API_URL = 'https://turboboost-portal.pages.dev/api'
+const EMAIL = 'inbe@ya.ru'
+const PASSWORD = 'rewfdsvcx5'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
