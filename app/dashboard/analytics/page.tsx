@@ -100,19 +100,84 @@ export default function AnalyticsPage() {
       setLoading(true)
       setError(null)
 
-      // Load analytics with chart data
-      const response = await fetch(
-        `/api/analytics?user_id=${currentUserId}&user_type=${currentUserType}&include_charts=true`
-      )
-
-      if (!response.ok) {
-        throw new Error('Не удалось загрузить аналитику')
+      // TODO: Load from API when ready
+      // For now, use mock data
+      const mockAnalytics: Analytics = {
+        campaigns: {
+          total: 12,
+          active: 5,
+          paused: 2,
+          completed: 4,
+          draft: 1,
+        },
+        placements: {
+          total: 45,
+          pending: 8,
+          approved: 12,
+          inProgress: 15,
+          completed: 10,
+        },
+        revenue: {
+          total: 450000,
+          thisMonth: 125000,
+          lastMonth: 98000,
+          growth: 27.5,
+        },
+        conversions: {
+          total: 1250,
+          thisMonth: 380,
+          lastMonth: 310,
+          growth: 22.6,
+        },
+        topCampaigns: [
+          {
+            id: '1',
+            name: 'Весенняя распродажа',
+            spent: 85000,
+            conversions: 420,
+            roi: 180,
+          },
+          {
+            id: '2',
+            name: 'Запуск нового продукта',
+            spent: 120000,
+            conversions: 580,
+            roi: 165,
+          },
+        ],
+        topChannels: [
+          {
+            id: '1',
+            name: 'TechReview',
+            category: 'Технологии',
+            placements: 8,
+            conversions: 245,
+            revenue: 95000,
+          },
+        ],
+        charts: {
+          placementsTimeline: [
+            { date: '01.11', created: 5, approved: 3, completed: 2 },
+            { date: '08.11', created: 8, approved: 6, completed: 4 },
+            { date: '15.11', created: 12, approved: 10, completed: 7 },
+            { date: '22.11', created: 10, approved: 9, completed: 8 },
+          ],
+          placementsStatus: [
+            { name: 'Ожидает', value: 8, color: '#fbbf24' },
+            { name: 'Одобрено', value: 12, color: '#10b981' },
+            { name: 'В работе', value: 15, color: '#3b82f6' },
+            { name: 'Завершено', value: 10, color: '#8b5cf6' },
+          ],
+          revenueExpense: [
+            { month: 'Авг', revenue: 75000, expense: 65000 },
+            { month: 'Сен', revenue: 98000, expense: 82000 },
+            { month: 'Окт', revenue: 125000, expense: 105000 },
+            { month: 'Ноя', revenue: 152000, expense: 128000 },
+          ],
+        },
       }
 
-      const result = await response.json()
-      if (result.success) {
-        setAnalytics(result.analytics)
-      }
+      setAnalytics(mockAnalytics)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Произошла ошибка')
     } finally {
