@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { VideoGeneratorModal } from '@/components/turboboost/video-generator-modal'
 import {
   DollarSign,
   TrendingUp,
@@ -15,6 +16,7 @@ import {
   Play,
   Users,
   BarChart3,
+  Video,
 } from 'lucide-react'
 
 interface PlacementStats {
@@ -36,6 +38,7 @@ export default function CreatorDashboardPage() {
   })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showVideoGenerator, setShowVideoGenerator] = useState(false)
 
   useEffect(() => {
     fetchStats()
@@ -94,8 +97,25 @@ export default function CreatorDashboardPage() {
                 Управляйте вашими размещениями и заработком
               </p>
             </div>
+            <Button
+              onClick={() => setShowVideoGenerator(true)}
+              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+            >
+              <Video className="mr-2 h-4 w-4" />
+              🎬 AI Генерация видео
+            </Button>
           </div>
         </div>
+
+        {/* Video Generator Modal */}
+        <VideoGeneratorModal
+          isOpen={showVideoGenerator}
+          onClose={() => setShowVideoGenerator(false)}
+          onVideoGenerated={(url) => {
+            console.log('Video generated:', url)
+            // TODO: Add to video library or auto-publish
+          }}
+        />
 
         {/* Error State */}
         {error && (
