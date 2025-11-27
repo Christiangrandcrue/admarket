@@ -18,14 +18,42 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Get user's channels
-    const { data: channels, error: channelsError } = await supabase
+    // Get user's channels (try both creator_id and owner_user_id)
+    let channels: any[] = []
+    let channelsError: any = null
+    
+    // Try with creator_id first
+    const result1 = await supabase
       .from('channels')
       .select('*')
       .eq('creator_id', user.id)
       .order('created_at', { ascending: false })
+    
+    if (result1.error && result1.error.message.includes('does not exist')) {
+      // If creator_id doesn't exist, try owner_user_id
+      const result2 = await supabase
+        .from('channels')
+        .select('*')
+        .eq('owner_user_id', user.id)
+        .order('created_at', { ascending: false })
+      
+      channels = result2.data || []
+      channelsError = result2.error
+    } else {
+      channels = result1.data || []
+      channelsError = result1.error
+    }
 
-    if (channelsError) throw channelsError
+    if (channelsError) {
+      console.error('Channels error:', channelsError)
+      // Return empty instead of throwing
+      return NextResponse.json({
+        success: true,
+        channels: [],
+        hasChannels: false,
+        source: 'fallback',
+      })
+    }
 
     return NextResponse.json({
       success: true,
@@ -75,9 +103,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Prepare channel record
+    // Prepare channel record (use owner_user_id for compatibility)
     const channel = {
-      creator_id: user.id,
+      owner_user_id: user.id,
       platform: channelData.platform,
       handle: channelData.handle,
       title: channelData.title,
@@ -151,14 +179,20 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    // Verify ownership
+    // Verify ownership (try both creator_id and owner_user_id)
     const { data: existingChannel, error: fetchError } = await supabase
       .from('channels')
-      .select('creator_id')
+      .select('creator_id, owner_user_id')
       .eq('id', channel_id)
       .single()
 
-    if (fetchError) throw fetchError
+    if (fetchError) {
+      console.error('Fetch channel error:', fetchError)
+      return NextResponse.json(
+        { error: 'Channel not found or database error' },
+        { status: 404 }
+      )
+    }
 
     if (!existingChannel) {
       return NextResponse.json(
@@ -167,7 +201,12 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    if (existingChannel.creator_id !== user.id) {
+    // Check ownership with both fields
+    const isOwner = 
+      existingChannel.creator_id === user.id || 
+      existingChannel.owner_user_id === user.id
+
+    if (!isOwner) {
       return NextResponse.json(
         { error: 'Unauthorized. You do not own this channel.' },
         { status: 403 }

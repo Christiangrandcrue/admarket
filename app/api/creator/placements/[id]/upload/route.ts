@@ -50,7 +50,7 @@ export async function POST(
       .from('placements')
       .select(`
         *,
-        channel:channels!placements_channel_id_fkey(creator_id),
+        channel:channels!placements_channel_id_fkey(creator_id, owner_user_id),
         campaign:campaigns(
           id,
           title,
@@ -61,7 +61,13 @@ export async function POST(
       .eq('id', id)
       .single()
 
-    if (fetchError) throw fetchError
+    if (fetchError) {
+      console.error('Fetch placement error:', fetchError)
+      return NextResponse.json(
+        { error: 'Placement not found or database error' },
+        { status: 404 }
+      )
+    }
 
     if (!placement) {
       return NextResponse.json(
@@ -70,9 +76,13 @@ export async function POST(
       )
     }
 
-    // Verify user owns the channel
+    // Verify user owns the channel (check both fields)
     const channel = placement.channel as any
-    if (channel?.creator_id !== user.id) {
+    const isOwner = 
+      channel?.creator_id === user.id || 
+      channel?.owner_user_id === user.id
+
+    if (!isOwner) {
       return NextResponse.json(
         { error: 'Unauthorized. You do not own this channel.' },
         { status: 403 }
