@@ -32,14 +32,22 @@ export function VideoGeneratorModal({ isOpen, onClose, onVideoGenerated }: Video
       return
     }
 
-    console.log('[VideoGenerator] Starting generation...', { topic, style, duration })
+    console.log('[VideoGenerator] ===== STARTING GENERATION =====')
+    console.log('[VideoGenerator] Topic:', topic)
+    console.log('[VideoGenerator] Style:', style)
+    console.log('[VideoGenerator] Duration:', duration)
     
-    setGenerating(true)
-    setStatus('generating')
-    setProgress(0)
-    setError(null)
-
     try {
+      // CRITICAL: Set state immediately BEFORE any async calls
+      console.log('[VideoGenerator] Setting state to GENERATING...')
+      setGenerating(true)
+      setStatus('generating')
+      setProgress(0)
+      setError(null)
+      console.log('[VideoGenerator] ✅ State updated successfully')
+      
+      // Small delay to ensure UI updates
+      await new Promise(resolve => setTimeout(resolve, 100))
       // Step 1: Authenticate with TurboBoost
       console.log('[VideoGenerator] Step 1: Authenticating...')
       const authRes = await fetch('/api/turboboost/auth', { method: 'POST' })
