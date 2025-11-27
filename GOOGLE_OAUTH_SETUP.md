@@ -1,4 +1,23 @@
-# 🔐 Google OAuth Setup Guide
+# ✅ Google OAuth - Configured!
+
+## 🎉 Status: Active
+
+Google OAuth is now fully configured and deployed!
+
+### Credentials (for reference):
+- **Client ID**: `827746744243-3362tghtkbj8arsnagh02rfk16vm79l8.apps.googleusercontent.com`
+- **Client Secret**: Securely stored in Supabase
+- **Redirect URI**: `https://visoxfhymssvunyazgsl.supabase.co/auth/v1/callback`
+
+### Testing:
+- Visit https://ads.synthnova.me/auth/login
+- Click "Войти через Google"
+- Authorize with your Google account
+- You'll be redirected back to the app!
+
+---
+
+# 🔐 Google OAuth Setup Guide (Original Instructions)
 
 ## Шаг 1: Google Cloud Console (3 минуты)
 

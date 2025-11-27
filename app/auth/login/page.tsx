@@ -82,8 +82,7 @@ export default function LoginPage() {
           )}
 
           {/* OAuth Buttons */}
-          {/* Google OAuth temporarily disabled until configured in Supabase */}
-          {/*
+          {/* Google OAuth */}
           <div className="mb-6 space-y-3">
             <Button
               type="button"
@@ -122,7 +121,6 @@ export default function LoginPage() {
               <span className="bg-white px-4 text-gray-500">или с email</span>
             </div>
           </div>
-          */}
 
           {/* Email Login Form */}
           <form onSubmit={handleEmailLogin} className="space-y-4">
