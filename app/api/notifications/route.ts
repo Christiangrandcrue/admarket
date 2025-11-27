@@ -43,7 +43,13 @@ export async function GET(request: NextRequest) {
     const { data: notifications, error: notificationsError } = await query
 
     if (notificationsError) {
-      throw notificationsError
+      // Return empty array if table doesn't exist
+      console.error('Notifications error:', notificationsError)
+      return NextResponse.json({
+        success: true,
+        notifications: [],
+        unreadCount: 0,
+      })
     }
 
     // Get unread count

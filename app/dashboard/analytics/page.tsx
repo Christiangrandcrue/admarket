@@ -155,6 +155,21 @@ export default function AnalyticsPage() {
             revenue: 95000,
           },
         ],
+        reviews: {
+          received: {
+            total: 24,
+            avgRating: 4.7,
+          },
+          given: {
+            total: 18,
+            avgRating: 4.5,
+          },
+        },
+        messages: {
+          totalConversations: 15,
+          unreadCount: 3,
+          activeConversations: 8,
+        },
         charts: {
           placementsTimeline: [
             { date: '01.11', created: 5, approved: 3, completed: 2 },
