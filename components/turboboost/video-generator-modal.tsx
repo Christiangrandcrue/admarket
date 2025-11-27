@@ -32,6 +32,8 @@ export function VideoGeneratorModal({ isOpen, onClose, onVideoGenerated }: Video
       return
     }
 
+    console.log('[VideoGenerator] Starting generation...', { topic, style, duration })
+    
     setGenerating(true)
     setStatus('generating')
     setProgress(0)
@@ -39,22 +41,30 @@ export function VideoGeneratorModal({ isOpen, onClose, onVideoGenerated }: Video
 
     try {
       // Step 1: Authenticate with TurboBoost
+      console.log('[VideoGenerator] Step 1: Authenticating...')
       const authRes = await fetch('/api/turboboost/auth', { method: 'POST' })
       const authData = await authRes.json()
+
+      console.log('[VideoGenerator] Auth response:', authData)
 
       if (!authData.success) {
         throw new Error(authData.error || 'Ошибка авторизации')
       }
 
       const token = authData.token
+      console.log('[VideoGenerator] Token received:', token ? 'YES' : 'NO')
 
       // Step 2: Create video generation task
+      console.log('[VideoGenerator] Step 2: Creating generation task...')
       const prompt = `Cinematic ${style} view of ${topic}, professional quality, ${duration} seconds`
       const brief = {
         topic,
         style,
         duration: parseInt(duration),
       }
+
+      console.log('[VideoGenerator] Prompt:', prompt)
+      console.log('[VideoGenerator] Brief:', brief)
 
       const generateRes = await fetch('/api/turboboost/generate', {
         method: 'POST',
@@ -63,6 +73,7 @@ export function VideoGeneratorModal({ isOpen, onClose, onVideoGenerated }: Video
       })
 
       const generateData = await generateRes.json()
+      console.log('[VideoGenerator] Generate response:', generateData)
 
       if (!generateData.success) {
         throw new Error(generateData.error || 'Ошибка создания задачи')
@@ -71,26 +82,41 @@ export function VideoGeneratorModal({ isOpen, onClose, onVideoGenerated }: Video
       const newTaskId = generateData.task_id
       setTaskId(newTaskId)
       setProgress(20)
+      
+      console.log('[VideoGenerator] Task ID:', newTaskId)
+      console.log('[VideoGenerator] Step 3: Starting polling...')
 
       // Step 3: Poll for task completion
+      let pollCount = 0
       const pollInterval = setInterval(async () => {
         try {
+          pollCount++
+          console.log(`[VideoGenerator] Polling attempt #${pollCount}...`)
+          
           const statusRes = await fetch(`/api/turboboost/tasks/${newTaskId}`, {
             headers: { 'Authorization': `Bearer ${token}` },
           })
 
           const statusData = await statusRes.json()
+          console.log(`[VideoGenerator] Poll #${pollCount} response:`, statusData)
 
           if (!statusData.success) {
             throw new Error(statusData.error || 'Ошибка проверки статуса')
           }
 
           const task = statusData.task
+          console.log(`[VideoGenerator] Task status: ${task.status}`)
 
           // Update progress based on status
           if (task.status === 'generating') {
-            setProgress((prev) => Math.min(prev + 10, 90))
+            setProgress((prev) => {
+              const newProgress = Math.min(prev + 10, 90)
+              console.log(`[VideoGenerator] Progress: ${prev}% → ${newProgress}%`)
+              return newProgress
+            })
           } else if (task.status === 'completed') {
+            console.log('[VideoGenerator] ✅ Generation completed!')
+            console.log('[VideoGenerator] Video URL:', task.video_url)
             clearInterval(pollInterval)
             setProgress(100)
             setStatus('completed')
@@ -101,12 +127,16 @@ export function VideoGeneratorModal({ isOpen, onClose, onVideoGenerated }: Video
               onVideoGenerated(task.video_url)
             }
           } else if (task.status === 'failed') {
+            console.error('[VideoGenerator] ❌ Generation failed:', task.error_message)
             clearInterval(pollInterval)
             setStatus('error')
             setError(task.error_message || 'Ошибка генерации видео')
             setGenerating(false)
+          } else {
+            console.log('[VideoGenerator] Unknown status:', task.status)
           }
         } catch (err: any) {
+          console.error('[VideoGenerator] Polling error:', err)
           clearInterval(pollInterval)
           setStatus('error')
           setError(err.message)
@@ -262,10 +292,10 @@ export function VideoGeneratorModal({ isOpen, onClose, onVideoGenerated }: Video
         <div className="flex gap-2">
           {status === 'idle' && (
             <>
-              <Button onClick={handleClose} variant="outline" className="flex-1">
+              <Button onClick={handleClose} variant="outline" className="flex-1" disabled={generating}>
                 Отмена
               </Button>
-              <Button onClick={handleGenerate} disabled={generating} className="flex-1">
+              <Button onClick={handleGenerate} disabled={generating || !topic.trim()} className="flex-1">
                 {generating ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -276,6 +306,13 @@ export function VideoGeneratorModal({ isOpen, onClose, onVideoGenerated }: Video
                 )}
               </Button>
             </>
+          )}
+
+          {status === 'generating' && (
+            <Button disabled className="w-full">
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Генерация в процессе...
+            </Button>
           )}
 
           {(status === 'completed' || status === 'error') && (
