@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+// Hardcoded credentials as fallback (will be overridden by env vars when added)
 const TURBOBOOST_API_URL = process.env.TURBOBOOST_API_URL || 'https://turboboost-portal.pages.dev/api'
 const TURBOBOOST_EMAIL = process.env.TURBOBOOST_EMAIL || 'inbe@ya.ru'
 const TURBOBOOST_PASSWORD = process.env.TURBOBOOST_PASSWORD || 'rewfdsvcx5'
+
+// Force hardcoded values if env vars are empty or undefined
+const API_URL = TURBOBOOST_API_URL || 'https://turboboost-portal.pages.dev/api'
+const EMAIL = TURBOBOOST_EMAIL || 'inbe@ya.ru'
+const PASSWORD = TURBOBOOST_PASSWORD || 'rewfdsvcx5'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -11,17 +17,17 @@ export const revalidate = 0
 export async function POST(request: NextRequest) {
   try {
     console.log('[TurboBoost Auth] Starting authentication...')
-    console.log('[TurboBoost Auth] API URL:', TURBOBOOST_API_URL)
-    console.log('[TurboBoost Auth] Email:', TURBOBOOST_EMAIL)
+    console.log('[TurboBoost Auth] API URL:', API_URL)
+    console.log('[TurboBoost Auth] Email:', EMAIL)
     
-    const response = await fetch(`${TURBOBOOST_API_URL}/auth/login`, {
+    const response = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        email: TURBOBOOST_EMAIL,
-        password: TURBOBOOST_PASSWORD,
+        email: EMAIL,
+        password: PASSWORD,
       }),
     })
 
