@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AdMarket + TurboBoost — Статус проекта</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 40px;
+            background: #f8f9fa;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-number {
+            font-size: 3em;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-label {
+            color: #666;
+            margin-top: 10px;
+            font-size: 1.1em;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 50px;
+        }
+
+        .section-title {
+            font-size: 2em;
+            margin-bottom: 25px;
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .category {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            border-left: 5px solid #667eea;
+        }
+
+        .category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+
+        .category-title {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .category-progress {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 15px;
+            color: white;
+            font-weight: bold;
+            transition: width 1s ease-in-out;
+        }
+
+        .features {
+            margin-top: 20px;
+        }
+
+        .feature {
+            padding: 15px;
+            background: white;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .feature-name {
+            font-size: 1.1em;
+        }
+
+        .status-badge {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .status-done {
+            background: #4caf50;
+            color: white;
+        }
+
+        .status-partial {
+            background: #ff9800;
+            color: white;
+        }
+
+        .status-missing {
+            background: #f44336;
+            color: white;
+        }
+
+        .additional-modules {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        .additional-modules h3 {
+            font-size: 1.8em;
+            margin-bottom: 20px;
+        }
+
+        .module {
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .recommendations {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .recommendation-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-top: 5px solid #667eea;
+        }
+
+        .recommendation-card h4 {
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+
+        .recommendation-card ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .recommendation-card li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .recommendation-card li:before {
+            content: "✓ ";
+            color: #4caf50;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 40px;
+            flex-wrap: wrap;
+        }
+
+        .cta-button {
+            padding: 15px 40px;
+            font-size: 1.2em;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        .timeline {
+            position: relative;
+            padding: 30px 0;
+        }
+
+        .timeline-item {
+            display: flex;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .timeline-marker {
+            width: 40px;
+            height: 40px;
+            background: #667eea;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            margin-right: 20px;
+            flex-shrink: 0;
+        }
+
+        .timeline-content {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            flex-grow: 1;
+        }
+
+        .timeline-content h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .emoji {
+            font-size: 1.2em;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .recommendations {
+                grid-template-columns: 1fr;
+            }
+            
+            .cta-buttons {
+                flex-direction: column;
+            }
+        }
+
+        .collapsible {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .collapsible.active {
+            max-height: 2000px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 AdMarket + TurboBoost</h1>
+            <p>Статус проекта и план развития</p>
+            <p style="font-size: 0.9em; margin-top: 10px; opacity: 0.8;">Обновлено: 27 ноября 2025</p>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number">45%</div>
+                <div class="stat-label">Прогресс от ROOT плана</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">+6</div>
+                <div class="stat-label">Дополнительных модулей</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">8</div>
+                <div class="stat-label">Основных категорий</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">2-3</div>
+                <div class="stat-label">Недели до MVP</div>
+            </div>
+        </div>
+
+        <div class="content">
+            <!-- Основные категории ROOT плана -->
+            <div class="section">
+                <h2 class="section-title">📋 Основные категории (ROOT план)</h2>
+
+                <!-- Category 1 -->
+                <div class="category">
+                    <div class="category-header" onclick="toggleCollapse('cat1')">
+                        <div>
+                            <div class="category-title">1. Пользователь / Креатор</div>
+                        </div>
+                        <div class="category-progress">60%</div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 60%">60%</div>
+                    </div>
+                    <div id="cat1" class="collapsible">
+                        <div class="features">
+                            <div class="feature">
+                                <span class="feature-name">✉️ Email регистрация + verification</span>
+                                <span class="status-badge status-done">Готово</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">🔐 Google OAuth</span>
+                                <span class="status-badge status-done">Готово</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">👤 Профиль креатора</span>
+                                <span class="status-badge status-done">Готово</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">📄 Оферта + права на контент</span>
+                                <span class="status-badge status-missing">Нет</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">⚙️ Настройки языка/гео/тематики</span>
+                                <span class="status-badge status-missing">Нет</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">📺 Подключение каналов (ручной ввод)</span>
+                                <span class="status-badge status-done">Готово</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">🔗 OAuth интеграция каналов</span>
+                                <span class="status-badge status-missing">Нет</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">🎬 Кнопка TurboBoost</span>
+                                <span class="status-badge status-done">Готово</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">📝 Форма брифа (упрощённая)</span>
+                                <span class="status-badge status-partial">Частично</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category 2 -->
+                <div class="category">
+                    <div class="category-header" onclick="toggleCollapse('cat2')">
+                        <div>
+                            <div class="category-title">2. Контент-завод (Pipeline)</div>
+                        </div>
+                        <div class="category-progress">15%</div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 15%">15%</div>
+                    </div>
+                    <div id="cat2" class="collapsible">
+                        <div class="features">
+                            <div class="feature">
+                                <span class="feature-name">📥 Входной бриф → ТЗ (базовая валидация)</span>
+                                <span class="status-badge status-partial">Частично</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">🔍 Research модуль (поиск трендов)</span>
+                                <span class="status-badge status-missing">Нет</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">📜 Script Generator (ChatGPT)</span>
+                                <span class="status-badge status-missing">Нет</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">✨ Генерация промптов</span>
+                                <span class="status-badge status-missing">Нет</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">🎥 Выбор моделей (через TurboBoost)</span>
+                                <span class="status-badge status-partial">Частично</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">🎬 Пост-продакшн (субтитры, музыка)</span>
+                                <span class="status-badge status-missing">Нет</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">✅ QA / Модерация (NSFW фильтры)</span>
+                                <span class="status-badge status-missing">Нет</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category 3 -->
+                <div class="category">
+                    <div class="category-header" onclick="toggleCollapse('cat3')">
+                        <div>
+                            <div class="category-title">3. Хранилище и данные</div>
+                        </div>
+                        <div class="category-progress">70%</div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 70%">70%</div>
+                    </div>
+                    <div id="cat3" class="collapsible">
+                        <div class="features">
+                            <div class="feature">
+                                <span class="feature-name">🗄️ Supabase БД (users, channels, campaigns)</span>
+                                <span class="status-badge status-done">Готово</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">📊 Таблица generation_tasks</span>
+                                <span class="status-badge status-missing">Нет</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">🎥 Таблица creator_videos</span>
+                                <span class="status-badge status-missing">Нет</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">📁 Файловое хранилище</span>
+                                <span class="status-badge status-missing">Нет</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">📚 Библиотека шаблонов/персонажей</span>
+                                <span class="status-badge status-missing">Нет</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category 4 -->
+                <div class="category">
+                    <div class="category-header" onclick="toggleCollapse('cat4')">
+                        <div>
+                            <div class="category-title">4. Выдача результата креатору</div>
+                        </div>
+                        <div class="category-progress">40%</div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 40%">40%</div>
+                    </div>
+                    <div id="cat4" class="collapsible">
+                        <div class="features">
+                            <div class="feature">
+                                <span class="feature-name">🎬 Превью видео в модалке</span>
+                                <span class="status-badge status-done">Готово</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">📥 Кнопка "Скачать"</span>
+                                <span class="status-badge status-done">Готово</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">📋 Страница /dashboard/creator/videos</span>
+                                <span class="status-badge status-missing">Нет</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">📜 История видео</span>
+                                <span class="status-badge status-missing">Нет</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">🔄 Re-generate</span>
+                                <span class="status-badge status-missing">Нет</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">📤 Автопостинг на каналы</span>
+                                <span class="status-badge status-missing">Нет</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">📅 Планировщик публикаций</span>
+                                <span class="status-badge status-missing">Нет</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category 5 -->
+                <div class="category">
+                    <div class="category-header" onclick="toggleCollapse('cat5')">
+                        <div>
+                            <div class="category-title">5. Аналитика и обратная связь</div>
+                        </div>
+                        <div class="category-progress">50%</div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 50%">50%</div>
+                    </div>
+                    <div id="cat5" class="collapsible">
+                        <div class="features">
+                            <div class="feature">
+                                <span class="feature-name">📊 Dashboard с графиками</span>
+                                <span class="status-badge status-done">Готово</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">📈 Фильтры периодов</span>
+                                <span class="status-badge status-done">Готово</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">💾 PNG export</span>
+                                <span class="status-badge status-done">Готово</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">📊 Реальные данные (сейчас mock)</span>
+                                <span class="status-badge status-missing">Нет</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">🤖 ML рекомендации</span>
+                                <span class="status-badge status-missing">Нет</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">🔬 A/B тестирование</span>
+                                <span class="status-badge status-missing">Нет</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category 6 -->
+                <div class="category">
+                    <div class="category-header" onclick="toggleCollapse('cat6')">
+                        <div>
+                            <div class="category-title">6. Админка / Операции</div>
+                        </div>
+                        <div class="category-progress">60%</div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 60%">60%</div>
+                    </div>
+                    <div id="cat6" class="collapsible">
+                        <div class="features">
+                            <div class="feature">
+                                <span class="feature-name">👥 Модерация каналов</span>
+                                <span class="status-badge status-done">Готово</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">📋 Модерация кампаний</span>
+                                <span class="status-badge status-done">Готово</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">✅ Статусы аккаунтов</span>
+                                <span class="status-badge status-done">Готово</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">🔑 Управление API ключами</span>
+                                <span class="status-badge status-missing">Нет</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">🚫 Стоп-листы</span>
+                                <span class="status-badge status-missing">Нет</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">💳 Лимиты/тарифы</span>
+                                <span class="status-badge status-missing">Нет</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category 7 -->
+                <div class="category">
+                    <div class="category-header" onclick="toggleCollapse('cat7')">
+                        <div>
+                            <div class="category-title">7. Состояния процесса (лестница статусов)</div>
+                        </div>
+                        <div class="category-progress">0%</div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 0%">0%</div>
+                    </div>
+                    <div id="cat7" class="collapsible">
+                        <div class="features">
+                            <div class="feature">
+                                <span class="feature-name">📝 Draft (бриф создан)</span>
+                                <span class="status-badge status-missing">Нет</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">🔍 Researching</span>
+                                <span class="status-badge status-missing">Нет</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">📜 Script ready</span>
+                                <span class="status-badge status-missing">Нет</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">⚙️ Generating (frontend state)</span>
+                                <span class="status-badge status-partial">Частично</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">🎬 Post-processing</span>
+                                <span class="status-badge status-missing">Нет</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">✅ QA / Moderation</span>
+                                <span class="status-badge status-missing">Нет</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">✨ Ready in cabinet</span>
+                                <span class="status-badge status-missing">Нет</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">📤 Scheduled / Published</span>
+                                <span class="status-badge status-missing">Нет</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category 8 -->
+                <div class="category">
+                    <div class="category-header" onclick="toggleCollapse('cat8')">
+                        <div>
+                            <div class="category-title">8. Риски / ограничения</div>
+                        </div>
+                        <div class="category-progress">30%</div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 30%">30%</div>
+                    </div>
+                    <div id="cat8" class="collapsible">
+                        <div class="features">
+                            <div class="feature">
+                                <span class="feature-name">⚠️ TurboBoost имеет лимиты</span>
+                                <span class="status-badge status-partial">Частично</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">📄 Оферта + права на контент</span>
+                                <span class="status-badge status-missing">Нет</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">🚫 NSFW фильтры</span>
+                                <span class="status-badge status-missing">Нет</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">🏢 Стоп-листы брендов</span>
+                                <span class="status-badge status-missing">Нет</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-name">🔒 Обработка блокировок API</span>
+                                <span class="status-badge status-missing">Нет</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Дополнительные модули -->
+            <div class="section">
+                <h2 class="section-title">➕ Дополнительные модули (не в ROOT плане)</h2>
+                <div class="additional-modules">
+                    <h3>🎉 Реализовано сверх плана</h3>
+                    <div class="module">
+                        <span>💼 AdMarket платформа (рекламная биржа)</span>
+                        <span style="font-size: 1.5em; font-weight: bold;">80%</span>
+                    </div>
+                    <div class="module">
+                        <span>💬 Messaging система (real-time чаты)</span>
+                        <span style="font-size: 1.5em; font-weight: bold;">90%</span>
+                    </div>
+                    <div class="module">
+                        <span>📋 Blogger Catalog (фильтры, поиск)</span>
+                        <span style="font-size: 1.5em; font-weight: bold;">85%</span>
+                    </div>
+                    <div class="module">
+                        <span>🔐 Google OAuth (social login)</span>
+                        <span style="font-size: 1.5em; font-weight: bold;">100%</span>
+                    </div>
+                    <div class="module">
+                        <span>💰 Earnings Dashboard (финансы)</span>
+                        <span style="font-size: 1.5em; font-weight: bold;">75%</span>
+                    </div>
+                    <div class="module">
+                        <span>⚙️ Admin Moderation (модерация)</span>
+                        <span style="font-size: 1.5em; font-weight: bold;">70%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Рекомендации -->
+            <div class="section">
+                <h2 class="section-title">🚀 Что делать дальше?</h2>
+                <div class="recommendations">
+                    <div class="recommendation-card">
+                        <h4>🎯 Вариант 1: Быстрый MVP (2-3 недели)</h4>
+                        <p style="margin-bottom: 15px; color: #666;">Завершить TurboBoost интеграцию</p>
+                        <ul>
+                            <li>История видео (БД + UI) — 2 дня</li>
+                            <li>Автопостинг OAuth — 5 дней</li>
+                            <li>Environment variables — 1 день</li>
+                            <li>Документация — 2 дня</li>
+                        </ul>
+                        <p style="margin-top: 15px; font-weight: bold; color: #4caf50;">✅ Результат: Рабочий продукт для монетизации</p>
+                    </div>
+
+                    <div class="recommendation-card">
+                        <h4>🏗️ Вариант 2: Полный Pipeline (3-4 месяца)</h4>
+                        <p style="margin-bottom: 15px; color: #666;">Реализовать весь ROOT план</p>
+                        <ul>
+                            <li>Pipeline Orchestrator — 3-4 недели</li>
+                            <li>Библиотеки контента — 2-3 недели</li>
+                            <li>Автопостинг + планировщик — 2-3 недели</li>
+                            <li>QA/Модерация — 1-2 недели</li>
+                            <li>ML + Аналитика — 2-3 недели</li>
+                            <li>Юридика — 1 неделя</li>
+                        </ul>
+                        <p style="margin-top: 15px; font-weight: bold; color: #667eea;">🏆 Результат: Enterprise-ready платформа</p>
+                    </div>
+
+                    <div class="recommendation-card">
+                        <h4>🧪 Вариант 3: Тестирование</h4>
+                        <p style="margin-bottom: 15px; color: #666;">Протестировать текущую версию</p>
+                        <ul>
+                            <li>Открыть test page</li>
+                            <li>Сгенерировать видео</li>
+                            <li>Дать фидбек</li>
+                            <li>Определить приоритеты</li>
+                        </ul>
+                        <p style="margin-top: 15px; font-weight: bold; color: #ff9800;">⏱️ Результат: Понимание что улучшать</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Timeline -->
+            <div class="section">
+                <h2 class="section-title">📅 Roadmap до 100%</h2>
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-marker">1</div>
+                        <div class="timeline-content">
+                            <h4>Фаза 1: MVP (2-3 недели) → 60%</h4>
+                            <p>История видео + Автопостинг + Env vars + Документация</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-marker">2</div>
+                        <div class="timeline-content">
+                            <h4>Фаза 2: Pipeline (3-4 недели) → 75%</h4>
+                            <p>Research → Script → Prompts → Post-production → QA</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-marker">3</div>
+                        <div class="timeline-content">
+                            <h4>Фаза 3: Библиотеки (2-3 недели) → 85%</h4>
+                            <p>Шаблоны + Персонажи + Голоса + Импорт/экспорт</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-marker">4</div>
+                        <div class="timeline-content">
+                            <h4>Фаза 4: ML + Аналитика (2-3 недели) → 95%</h4>
+                            <p>Рекомендации + A/B тесты + Автокоррекция промптов</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-marker">5</div>
+                        <div class="timeline-content">
+                            <h4>Фаза 5: Юридика (1 неделя) → 100%</h4>
+                            <p>Оферта + Права на контент + Стоп-листы + Политика модерации</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CTA -->
+            <div class="section">
+                <h2 class="section-title">🔗 Полезные ссылки</h2>
+                <div class="cta-buttons">
+                    <a href="https://ads.synthnova.me" target="_blank" class="cta-button btn-primary">
+                        🌐 Production
+                    </a>
+                    <a href="https://ads.synthnova.me/test-video-generator" target="_blank" class="cta-button btn-success">
+                        🧪 Test Page
+                    </a>
+                    <a href="https://github.com/Christiangrandcrue/admarket" target="_blank" class="cta-button btn-secondary">
+                        💻 GitHub
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Toggle collapse
+        function toggleCollapse(id) {
+            const element = document.getElementById(id);
+            element.classList.toggle('active');
+        }
+
+        // Animate progress bars on load
+        window.addEventListener('load', () => {
+            const fills = document.querySelectorAll('.progress-fill');
+            fills.forEach(fill => {
+                const width = fill.style.width;
+                fill.style.width = '0%';
+                setTimeout(() => {
+                    fill.style.width = width;
+                }, 100);
+            });
+        });
+
+        // Print function
+        function printReport() {
+            window.print();
+        }
+    </script>
+</body>
+</html>
