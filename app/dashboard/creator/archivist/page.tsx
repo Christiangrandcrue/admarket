@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { 
   Folder, 
   FileText, 
@@ -21,14 +21,11 @@ import {
   ChevronRight,
   Loader2,
   Pencil,
-  FolderPlus,
-  Eye,
-  File
+  Eye
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { Badge } from "@/components/ui/badge"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -53,6 +50,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { createClient } from "@/lib/supabase/client"
 
 // --- Types ---
 type FileType = 'image' | 'video' | 'document' | 'audio' | 'folder'
@@ -66,8 +64,9 @@ interface FileItem {
   folderId: string | null // null = root
   starred: boolean
   deleted: boolean
-  timestamp: number // for sorting
-  url?: string // mock url for preview
+  timestamp: number
+  url?: string
+  storagePath: string
 }
 
 interface FolderItem {
@@ -78,38 +77,19 @@ interface FolderItem {
   bg: string
 }
 
-// --- Initial Data ---
-const INITIAL_FOLDERS: FolderItem[] = [
-  { id: 'contracts', name: 'Договоры и Акты', count: 3, color: 'text-blue-500', bg: 'bg-blue-50' },
-  { id: 'media', name: 'Исходники видео', count: 4, color: 'text-purple-500', bg: 'bg-purple-50' },
-  { id: 'invoices', name: 'Счета на оплату', count: 2, color: 'text-green-500', bg: 'bg-green-50' },
-  { id: 'assets', name: 'Бренд-кит', count: 2, color: 'text-orange-500', bg: 'bg-orange-50' },
-]
-
-const INITIAL_FILES: FileItem[] = [
-  { id: '1', name: 'Оферта_AdMarket_2025.pdf', type: 'document', size: '2.4 MB', date: '29.11.2025', folderId: 'contracts', starred: true, deleted: false, timestamp: 1732838400000, url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf' },
-  { id: '2', name: 'Договор_Samsung_Integration.docx', type: 'document', size: '1.1 MB', date: '28.11.2025', folderId: 'contracts', starred: false, deleted: false, timestamp: 1732752000000 },
-  { id: '3', name: 'Акт_выполненных_работ_#402.pdf', type: 'document', size: '850 KB', date: '25.11.2025', folderId: 'contracts', starred: false, deleted: false, timestamp: 1732492800000 },
-  { id: '4', name: 'Review_Pixel_8_Draft_v1.mp4', type: 'video', size: '1.2 GB', date: '27.11.2025', folderId: 'media', starred: true, deleted: false, timestamp: 1732665600000, url: 'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4' },
-  { id: '5', name: 'Thumbnail_Youtube_Final.jpg', type: 'image', size: '4.5 MB', date: '27.11.2025', folderId: 'media', starred: false, deleted: false, timestamp: 1732665600000, url: 'https://placehold.co/800x450/png' },
-  { id: '6', name: 'B-Roll_Unboxing.mov', type: 'video', size: '850 MB', date: '26.11.2025', folderId: 'media', starred: false, deleted: false, timestamp: 1732579200000 },
-  { id: '7', name: 'Voiceover_Intro.wav', type: 'audio', size: '12 MB', date: '26.11.2025', folderId: 'media', starred: false, deleted: false, timestamp: 1732579200000, url: 'https://www2.cs.uic.edu/~i101/SoundFiles/StarWars3.wav' },
-  { id: '8', name: 'Invoice_#2024-001.pdf', type: 'document', size: '150 KB', date: '20.11.2025', folderId: 'invoices', starred: false, deleted: false, timestamp: 1732060800000 },
-  { id: '9', name: 'Invoice_#2024-002.pdf', type: 'document', size: '150 KB', date: '22.11.2025', folderId: 'invoices', starred: false, deleted: false, timestamp: 1732233600000 },
-  { id: '10', name: 'Logo_Vector.svg', type: 'image', size: '50 KB', date: '01.11.2025', folderId: 'assets', starred: true, deleted: false, timestamp: 1730419200000, url: 'https://placehold.co/500x500/png' },
-  { id: '11', name: 'Font_Bold.ttf', type: 'document', size: '2 MB', date: '01.11.2025', folderId: 'assets', starred: false, deleted: false, timestamp: 1730419200000 },
-]
-
 export default function ArchivistPage() {
+  const supabase = createClient()
+  
   // State
-  const [folders, setFolders] = useState<FolderItem[]>(INITIAL_FOLDERS)
-  const [files, setFiles] = useState<FileItem[]>(INITIAL_FILES)
-  const [activeFolder, setActiveFolder] = useState<string | null>(null) // null = root
+  const [folders, setFolders] = useState<FolderItem[]>([])
+  const [files, setFiles] = useState<FileItem[]>([])
+  const [activeFolder, setActiveFolder] = useState<string | null>(null)
   const [activeSection, setActiveSection] = useState<'drive' | 'recent' | 'starred' | 'trash'>('drive')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [searchQuery, setSearchQuery] = useState('')
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
+  const [loading, setLoading] = useState(true)
   
   // Dialogs
   const [isNewFolderOpen, setIsNewFolderOpen] = useState(false)
@@ -120,127 +100,303 @@ export default function ArchivistPage() {
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // --- Real Data Fetching ---
+  const fetchData = async () => {
+    setLoading(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      // Fetch Folders
+      const { data: foldersData, error: foldersError } = await supabase
+        .from('folders')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+
+      if (foldersError) console.error('Error fetching folders:', foldersError)
+
+      // Fetch Files
+      const { data: filesData, error: filesError } = await supabase
+        .from('files')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+
+      if (filesError) console.error('Error fetching files:', filesError)
+
+      // Transform Data
+      if (foldersData) {
+        const formattedFolders = foldersData.map(f => ({
+          id: f.id,
+          name: f.name,
+          count: 0, // Calculated locally
+          color: f.color || 'text-blue-500',
+          bg: f.bg || 'bg-blue-50'
+        }))
+        // Update counts based on files
+        if (filesData) {
+          formattedFolders.forEach(folder => {
+            folder.count = filesData.filter((file: any) => file.folder_id === folder.id && !file.is_deleted).length
+          })
+        }
+        setFolders(formattedFolders)
+      }
+
+      if (filesData) {
+        const formattedFiles = filesData.map(f => ({
+          id: f.id,
+          name: f.name,
+          type: f.type as FileType,
+          size: f.size,
+          date: new Date(f.created_at).toLocaleDateString('ru-RU'),
+          folderId: f.folder_id,
+          starred: f.starred,
+          deleted: f.is_deleted,
+          timestamp: new Date(f.created_at).getTime(),
+          storagePath: f.storage_path
+        }))
+        setFiles(formattedFiles)
+      }
+
+    } catch (error) {
+      console.error('Error loading archivist data:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchData()
+  }, [])
+
   // --- Logic ---
 
-  // Filter Files based on current view
   const getFilteredFiles = () => {
     let filtered = files
 
-    // 1. Apply Search
     if (searchQuery) {
       filtered = filtered.filter(f => f.name.toLowerCase().includes(searchQuery.toLowerCase()))
     }
 
-    // 2. Apply Section Logic
     switch (activeSection) {
       case 'drive':
-        // Show files in current folder only, not deleted
         filtered = filtered.filter(f => !f.deleted && f.folderId === activeFolder)
         break
       case 'recent':
-        // Show all non-deleted files, sorted by date
         filtered = filtered.filter(f => !f.deleted).sort((a, b) => b.timestamp - a.timestamp)
         break
       case 'starred':
-        // Show starred non-deleted files
         filtered = filtered.filter(f => !f.deleted && f.starred)
         break
       case 'trash':
-        // Show deleted files
         filtered = filtered.filter(f => f.deleted)
         break
     }
-
     return filtered
   }
 
   const currentFiles = getFilteredFiles()
 
-  // Upload Simulation
+  // Real Upload
   const handleUploadClick = () => fileInputRef.current?.click()
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
     setUploading(true)
-    setUploadProgress(0)
+    setUploadProgress(10) // Initial progress
 
-    // Fake progress
-    const interval = setInterval(() => {
-      setUploadProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval)
-          return 100
-        }
-        return prev + 10
-      })
-    }, 200)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Unauthorized')
 
-    setTimeout(() => {
-      const newFile: FileItem = {
-        id: Date.now().toString(),
-        name: file.name,
-        type: file.type.includes('image') ? 'image' : file.type.includes('video') ? 'video' : 'document',
-        size: (file.size / 1024 / 1024).toFixed(1) + ' MB',
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
+      const filePath = `${user.id}/${fileName}`
+
+      // 1. Upload to Storage
+      setUploadProgress(30)
+      const { error: uploadError } = await supabase.storage
+        .from('archivist')
+        .upload(filePath, file)
+
+      if (uploadError) throw uploadError
+      setUploadProgress(70)
+
+      // 2. Determine type
+      let type: FileType = 'document'
+      if (file.type.startsWith('image/')) type = 'image'
+      else if (file.type.startsWith('video/')) type = 'video'
+      else if (file.type.startsWith('audio/')) type = 'audio'
+
+      const sizeStr = (file.size / 1024 / 1024).toFixed(1) + ' MB'
+
+      // 3. Insert Metadata
+      const { data: newFileMeta, error: dbError } = await supabase
+        .from('files')
+        .insert({
+          user_id: user.id,
+          name: file.name,
+          size: sizeStr,
+          type: type,
+          storage_path: filePath,
+          folder_id: activeFolder
+        })
+        .select()
+        .single()
+
+      if (dbError) throw dbError
+      
+      setUploadProgress(100)
+      
+      // Refresh List locally to feel fast
+      const newLocalFile: FileItem = {
+        id: newFileMeta.id,
+        name: newFileMeta.name,
+        type: newFileMeta.type as FileType,
+        size: newFileMeta.size,
         date: new Date().toLocaleDateString('ru-RU'),
-        folderId: activeFolder,
+        folderId: newFileMeta.folder_id,
         starred: false,
         deleted: false,
         timestamp: Date.now(),
-        url: URL.createObjectURL(file) // Create object URL for preview
+        storagePath: newFileMeta.storage_path
       }
-      setFiles([newFile, ...files])
-      setUploading(false)
-      setUploadProgress(0)
+      setFiles([newLocalFile, ...files])
       
-      // Update folder count if in a folder
+      // Update folder count
       if (activeFolder) {
         setFolders(folders.map(f => f.id === activeFolder ? { ...f, count: f.count + 1 } : f))
       }
-    }, 2500)
-  }
 
-  // Create Folder
-  const handleCreateFolder = () => {
-    if (!newFolderName.trim()) return
-    const newFolder: FolderItem = {
-      id: Date.now().toString(),
-      name: newFolderName,
-      count: 0,
-      color: 'text-gray-500',
-      bg: 'bg-gray-50'
+    } catch (error: any) {
+      console.error('Upload failed:', error)
+      alert('Ошибка загрузки: ' + error.message)
+    } finally {
+      setUploading(false)
+      setUploadProgress(0)
+      if (fileInputRef.current) fileInputRef.current.value = '' // Reset input
     }
-    setFolders([...folders, newFolder])
-    setNewFolderName('')
-    setIsNewFolderOpen(false)
   }
 
-  // File Actions
-  const toggleStar = (id: string) => {
-    setFiles(files.map(f => f.id === id ? { ...f, starred: !f.starred } : f))
+  // Real Create Folder
+  const handleCreateFolder = async () => {
+    if (!newFolderName.trim()) return
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data: newFolder, error } = await supabase
+        .from('folders')
+        .insert({
+          user_id: user.id,
+          name: newFolderName,
+          color: 'text-gray-500',
+          bg: 'bg-gray-50'
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+
+      const localFolder: FolderItem = {
+        id: newFolder.id,
+        name: newFolder.name,
+        count: 0,
+        color: newFolder.color,
+        bg: newFolder.bg
+      }
+
+      setFolders([localFolder, ...folders])
+      setNewFolderName('')
+      setIsNewFolderOpen(false)
+    } catch (error: any) {
+      console.error('Error creating folder:', error)
+      alert('Ошибка создания папки')
+    }
   }
 
-  const moveToTrash = (id: string) => {
+  // Real Interactions
+  const toggleStar = async (id: string) => {
+    const file = files.find(f => f.id === id)
+    if (!file) return
+    
+    // Optimistic Update
+    const newStatus = !file.starred
+    setFiles(files.map(f => f.id === id ? { ...f, starred: newStatus } : f))
+
+    await supabase.from('files').update({ starred: newStatus }).eq('id', id)
+  }
+
+  const moveToTrash = async (id: string) => {
+    // Optimistic
     setFiles(files.map(f => f.id === id ? { ...f, deleted: true } : f))
+    await supabase.from('files').update({ is_deleted: true }).eq('id', id)
   }
 
-  const restoreFromTrash = (id: string) => {
+  const restoreFromTrash = async (id: string) => {
+    // Optimistic
     setFiles(files.map(f => f.id === id ? { ...f, deleted: false } : f))
+    await supabase.from('files').update({ is_deleted: false }).eq('id', id)
   }
 
-  const deletePermanently = (id: string) => {
+  const deletePermanently = async (id: string) => {
+    const file = files.find(f => f.id === id)
+    if (!file) return
+
+    // Optimistic
     setFiles(files.filter(f => f.id !== id))
+
+    // 1. Delete from Storage
+    await supabase.storage.from('archivist').remove([file.storagePath])
+    // 2. Delete from DB
+    await supabase.from('files').delete().eq('id', id)
   }
 
-  const handleRename = () => {
+  const handleRename = async () => {
     if (!renamingFile || !newName.trim()) return
+    
+    // Optimistic
     setFiles(files.map(f => f.id === renamingFile.id ? { ...f, name: newName } : f))
     setRenamingFile(null)
     setNewName('')
+
+    await supabase.from('files').update({ name: newName }).eq('id', renamingFile.id)
   }
 
-  // Icons
+  // Preview Logic (Get Signed URL)
+  const handlePreview = async (file: FileItem) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('archivist')
+        .createSignedUrl(file.storagePath, 3600) // 1 hour
+
+      if (error) throw error
+
+      setPreviewFile({ ...file, url: data.signedUrl })
+    } catch (error) {
+      console.error('Error getting signed url:', error)
+      alert('Не удалось открыть файл. Возможно, он был удален.')
+    }
+  }
+
+  const handleDownload = async (file: FileItem) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('archivist')
+        .createSignedUrl(file.storagePath, 60, { download: true }) // Download disposition
+
+      if (error) throw error
+      if (data?.signedUrl) window.open(data.signedUrl, '_blank')
+    } catch (error) {
+      console.error('Download error:', error)
+    }
+  }
+
+  // --- UI Helpers ---
   const getIcon = (type: FileType) => {
     switch (type) {
       case 'image': return <ImageIcon className="w-8 h-8 text-purple-500" />
@@ -251,8 +407,8 @@ export default function ArchivistPage() {
     }
   }
 
-  // Calculate Storage
-  const usedStorage = files.length * 0.5 // Dummy calculation: 0.5 GB per file avg for demo
+  // Dummy calculation
+  const usedStorage = files.length * 0.05 
   const totalStorage = 10
 
   return (
@@ -482,14 +638,16 @@ export default function ArchivistPage() {
                 activeSection === 'trash' ? 'Корзина' : 'Файлы'}
              </h2>
              
-             {viewMode === 'grid' ? (
+             {loading && files.length === 0 ? (
+               <div className="py-12 text-center text-gray-400">Загрузка...</div>
+             ) : viewMode === 'grid' ? (
                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
                  {currentFiles.length > 0 ? currentFiles.map(file => (
                    <ContextMenu key={file.id}>
                      <ContextMenuTrigger>
                        <div 
                          className="group bg-white p-4 rounded-xl border border-gray-200 hover:border-purple-300 hover:shadow-md cursor-pointer transition-all relative h-full flex flex-col"
-                         onDoubleClick={() => setPreviewFile(file)}
+                         onDoubleClick={() => handlePreview(file)}
                        >
                           <div className="flex justify-between items-start mb-3">
                              <div className="p-3 rounded-lg bg-gray-50 group-hover:bg-white transition-colors">
@@ -525,10 +683,10 @@ export default function ArchivistPage() {
                                   </>
                                 ) : (
                                   <>
-                                    <DropdownMenuItem onClick={() => setPreviewFile(file)}>
+                                    <DropdownMenuItem onClick={() => handlePreview(file)}>
                                       <Eye className="w-4 h-4 mr-2" /> Просмотр
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem>Скачать</DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleDownload(file)}>Скачать</DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => { setRenamingFile(file); setNewName(file.name) }}>
                                       Переименовать
                                     </DropdownMenuItem>
@@ -560,10 +718,10 @@ export default function ArchivistPage() {
                           </>
                         ) : (
                           <>
-                            <ContextMenuItem onClick={() => setPreviewFile(file)}>
+                            <ContextMenuItem onClick={() => handlePreview(file)}>
                               <Eye className="w-4 h-4 mr-2" /> Просмотр
                             </ContextMenuItem>
-                            <ContextMenuItem>
+                            <ContextMenuItem onClick={() => handleDownload(file)}>
                               <Download className="w-4 h-4 mr-2" /> Скачать
                             </ContextMenuItem>
                             <ContextMenuItem onClick={() => { setRenamingFile(file); setNewName(file.name) }}>
@@ -607,7 +765,7 @@ export default function ArchivistPage() {
                          <ContextMenuTrigger asChild>
                            <tr 
                             className="border-b border-gray-50 hover:bg-purple-50/50 transition-colors group cursor-pointer"
-                            onDoubleClick={() => setPreviewFile(file)}
+                            onDoubleClick={() => handlePreview(file)}
                            >
                              <td className="px-6 py-3 font-medium text-gray-900 flex items-center gap-3">
                                 {getIcon(file.type)}
@@ -624,7 +782,6 @@ export default function ArchivistPage() {
                                     </Button>
                                   </DropdownMenuTrigger>
                                   <DropdownMenuContent align="end">
-                                    {/* Copy-paste same menu logic */}
                                     {activeSection === 'trash' ? (
                                       <>
                                         <DropdownMenuItem onClick={() => restoreFromTrash(file.id)}>Восстановить</DropdownMenuItem>
@@ -632,10 +789,10 @@ export default function ArchivistPage() {
                                       </>
                                     ) : (
                                       <>
-                                        <DropdownMenuItem onClick={() => setPreviewFile(file)}>
+                                        <DropdownMenuItem onClick={() => handlePreview(file)}>
                                           <Eye className="w-4 h-4 mr-2" /> Просмотр
                                         </DropdownMenuItem>
-                                        <DropdownMenuItem>Скачать</DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => handleDownload(file)}>Скачать</DropdownMenuItem>
                                         <DropdownMenuItem onClick={() => { setRenamingFile(file); setNewName(file.name) }}>Переименовать</DropdownMenuItem>
                                         <DropdownMenuItem onClick={() => toggleStar(file.id)}>{file.starred ? 'Убрать из избранного' : 'В избранное'}</DropdownMenuItem>
                                         <DropdownMenuSeparator />
@@ -648,7 +805,6 @@ export default function ArchivistPage() {
                            </tr>
                          </ContextMenuTrigger>
                          <ContextMenuContent>
-                            {/* Same Context Menu Content */}
                             <ContextMenuLabel>{file.name}</ContextMenuLabel>
                             <ContextMenuSeparator />
                             {activeSection === 'trash' ? (
@@ -658,10 +814,10 @@ export default function ArchivistPage() {
                               </>
                             ) : (
                               <>
-                                <ContextMenuItem onClick={() => setPreviewFile(file)}>
+                                <ContextMenuItem onClick={() => handlePreview(file)}>
                                   <Eye className="w-4 h-4 mr-2" /> Просмотр
                                 </ContextMenuItem>
-                                <ContextMenuItem>Скачать</ContextMenuItem>
+                                <ContextMenuItem onClick={() => handleDownload(file)}>Скачать</ContextMenuItem>
                                 <ContextMenuItem onClick={() => { setRenamingFile(file); setNewName(file.name) }}>Переименовать</ContextMenuItem>
                                 <ContextMenuItem onClick={() => toggleStar(file.id)}>
                                   {file.starred ? 'Убрать из избранного' : 'В избранное'}
