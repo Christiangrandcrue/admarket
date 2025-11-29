@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { 
   Folder, 
   FileText, 
@@ -18,7 +18,10 @@ import {
   Clock,
   Star,
   Plus,
-  ChevronRight
+  ChevronRight,
+  X,
+  Check,
+  Loader2
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -29,7 +32,17 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 
 // --- Types ---
 type FileType = 'image' | 'video' | 'document' | 'audio' | 'folder'
@@ -40,52 +53,181 @@ interface FileItem {
   type: FileType
   size: string
   date: string
-  starred?: boolean
+  folderId: string | null // null = root
+  starred: boolean
+  deleted: boolean
+  timestamp: number // for sorting
 }
 
-// --- Mock Data ---
-const FOLDERS = [
-  { id: 'contracts', name: 'Договоры и Акты', count: 12, color: 'text-blue-500', bg: 'bg-blue-50' },
-  { id: 'media', name: 'Исходники видео', count: 45, color: 'text-purple-500', bg: 'bg-purple-50' },
-  { id: 'invoices', name: 'Счета на оплату', count: 8, color: 'text-green-500', bg: 'bg-green-50' },
-  { id: 'assets', name: 'Бренд-кит', count: 24, color: 'text-orange-500', bg: 'bg-orange-50' },
+interface FolderItem {
+  id: string
+  name: string
+  count: number
+  color: string
+  bg: string
+}
+
+// --- Initial Data ---
+const INITIAL_FOLDERS: FolderItem[] = [
+  { id: 'contracts', name: 'Договоры и Акты', count: 3, color: 'text-blue-500', bg: 'bg-blue-50' },
+  { id: 'media', name: 'Исходники видео', count: 4, color: 'text-purple-500', bg: 'bg-purple-50' },
+  { id: 'invoices', name: 'Счета на оплату', count: 2, color: 'text-green-500', bg: 'bg-green-50' },
+  { id: 'assets', name: 'Бренд-кит', count: 2, color: 'text-orange-500', bg: 'bg-orange-50' },
 ]
 
-const FILES: Record<string, FileItem[]> = {
-  'contracts': [
-    { id: '1', name: 'Оферта_AdMarket_2025.pdf', type: 'document', size: '2.4 MB', date: '29.11.2025', starred: true },
-    { id: '2', name: 'Договор_Samsung_Integration.docx', type: 'document', size: '1.1 MB', date: '28.11.2025' },
-    { id: '3', name: 'Акт_выполненных_работ_#402.pdf', type: 'document', size: '850 KB', date: '25.11.2025' },
-  ],
-  'media': [
-    { id: '4', name: 'Review_Pixel_8_Draft_v1.mp4', type: 'video', size: '1.2 GB', date: '27.11.2025', starred: true },
-    { id: '5', name: 'Thumbnail_Youtube_Final.jpg', type: 'image', size: '4.5 MB', date: '27.11.2025' },
-    { id: '6', name: 'B-Roll_Unboxing.mov', type: 'video', size: '850 MB', date: '26.11.2025' },
-    { id: '7', name: 'Voiceover_Intro.wav', type: 'audio', size: '12 MB', date: '26.11.2025' },
-  ],
-  'invoices': [
-    { id: '8', name: 'Invoice_#2024-001.pdf', type: 'document', size: '150 KB', date: '20.11.2025' },
-    { id: '9', name: 'Invoice_#2024-002.pdf', type: 'document', size: '150 KB', date: '22.11.2025' },
-  ],
-  'assets': [
-    { id: '10', name: 'Logo_Vector.svg', type: 'image', size: '50 KB', date: '01.11.2025', starred: true },
-    { id: '11', name: 'Font_Bold.ttf', type: 'document', size: '2 MB', date: '01.11.2025' },
-  ]
-}
-
-const RECENT_FILES = [
-  ...FILES['media'], ...FILES['contracts']
-].sort(() => 0.5 - Math.random()).slice(0, 4)
-
-// --- Components ---
+const INITIAL_FILES: FileItem[] = [
+  { id: '1', name: 'Оферта_AdMarket_2025.pdf', type: 'document', size: '2.4 MB', date: '29.11.2025', folderId: 'contracts', starred: true, deleted: false, timestamp: 1732838400000 },
+  { id: '2', name: 'Договор_Samsung_Integration.docx', type: 'document', size: '1.1 MB', date: '28.11.2025', folderId: 'contracts', starred: false, deleted: false, timestamp: 1732752000000 },
+  { id: '3', name: 'Акт_выполненных_работ_#402.pdf', type: 'document', size: '850 KB', date: '25.11.2025', folderId: 'contracts', starred: false, deleted: false, timestamp: 1732492800000 },
+  { id: '4', name: 'Review_Pixel_8_Draft_v1.mp4', type: 'video', size: '1.2 GB', date: '27.11.2025', folderId: 'media', starred: true, deleted: false, timestamp: 1732665600000 },
+  { id: '5', name: 'Thumbnail_Youtube_Final.jpg', type: 'image', size: '4.5 MB', date: '27.11.2025', folderId: 'media', starred: false, deleted: false, timestamp: 1732665600000 },
+  { id: '6', name: 'B-Roll_Unboxing.mov', type: 'video', size: '850 MB', date: '26.11.2025', folderId: 'media', starred: false, deleted: false, timestamp: 1732579200000 },
+  { id: '7', name: 'Voiceover_Intro.wav', type: 'audio', size: '12 MB', date: '26.11.2025', folderId: 'media', starred: false, deleted: false, timestamp: 1732579200000 },
+  { id: '8', name: 'Invoice_#2024-001.pdf', type: 'document', size: '150 KB', date: '20.11.2025', folderId: 'invoices', starred: false, deleted: false, timestamp: 1732060800000 },
+  { id: '9', name: 'Invoice_#2024-002.pdf', type: 'document', size: '150 KB', date: '22.11.2025', folderId: 'invoices', starred: false, deleted: false, timestamp: 1732233600000 },
+  { id: '10', name: 'Logo_Vector.svg', type: 'image', size: '50 KB', date: '01.11.2025', folderId: 'assets', starred: true, deleted: false, timestamp: 1730419200000 },
+  { id: '11', name: 'Font_Bold.ttf', type: 'document', size: '2 MB', date: '01.11.2025', folderId: 'assets', starred: false, deleted: false, timestamp: 1730419200000 },
+]
 
 export default function ArchivistPage() {
-  const [activeFolder, setActiveFolder] = useState<string | null>(null) // null = Dashboard/Overview
+  // State
+  const [folders, setFolders] = useState<FolderItem[]>(INITIAL_FOLDERS)
+  const [files, setFiles] = useState<FileItem[]>(INITIAL_FILES)
+  const [activeFolder, setActiveFolder] = useState<string | null>(null) // null = root
+  const [activeSection, setActiveSection] = useState<'drive' | 'recent' | 'starred' | 'trash'>('drive')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [searchQuery, setSearchQuery] = useState('')
+  const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  
+  // Dialogs
+  const [isNewFolderOpen, setIsNewFolderOpen] = useState(false)
+  const [newFolderName, setNewFolderName] = useState('')
+  const [renamingFile, setRenamingFile] = useState<FileItem | null>(null)
+  const [newName, setNewName] = useState('')
 
-  const currentFiles = activeFolder ? FILES[activeFolder] : RECENT_FILES
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // --- Logic ---
+
+  // Filter Files based on current view
+  const getFilteredFiles = () => {
+    let filtered = files
+
+    // 1. Apply Search
+    if (searchQuery) {
+      filtered = filtered.filter(f => f.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    }
+
+    // 2. Apply Section Logic
+    switch (activeSection) {
+      case 'drive':
+        // Show files in current folder only, not deleted
+        filtered = filtered.filter(f => !f.deleted && f.folderId === activeFolder)
+        break
+      case 'recent':
+        // Show all non-deleted files, sorted by date
+        filtered = filtered.filter(f => !f.deleted).sort((a, b) => b.timestamp - a.timestamp)
+        break
+      case 'starred':
+        // Show starred non-deleted files
+        filtered = filtered.filter(f => !f.deleted && f.starred)
+        break
+      case 'trash':
+        // Show deleted files
+        filtered = filtered.filter(f => f.deleted)
+        break
+    }
+
+    return filtered
+  }
+
+  const currentFiles = getFilteredFiles()
+
+  // Upload Simulation
+  const handleUploadClick = () => fileInputRef.current?.click()
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploading(true)
+    setUploadProgress(0)
+
+    // Fake progress
+    const interval = setInterval(() => {
+      setUploadProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(interval)
+          return 100
+        }
+        return prev + 10
+      })
+    }, 200)
+
+    setTimeout(() => {
+      const newFile: FileItem = {
+        id: Date.now().toString(),
+        name: file.name,
+        type: file.type.includes('image') ? 'image' : file.type.includes('video') ? 'video' : 'document',
+        size: (file.size / 1024 / 1024).toFixed(1) + ' MB',
+        date: new Date().toLocaleDateString('ru-RU'),
+        folderId: activeFolder,
+        starred: false,
+        deleted: false,
+        timestamp: Date.now()
+      }
+      setFiles([newFile, ...files])
+      setUploading(false)
+      setUploadProgress(0)
+      
+      // Update folder count if in a folder
+      if (activeFolder) {
+        setFolders(folders.map(f => f.id === activeFolder ? { ...f, count: f.count + 1 } : f))
+      }
+    }, 2500)
+  }
+
+  // Create Folder
+  const handleCreateFolder = () => {
+    if (!newFolderName.trim()) return
+    const newFolder: FolderItem = {
+      id: Date.now().toString(),
+      name: newFolderName,
+      count: 0,
+      color: 'text-gray-500',
+      bg: 'bg-gray-50'
+    }
+    setFolders([...folders, newFolder])
+    setNewFolderName('')
+    setIsNewFolderOpen(false)
+  }
+
+  // File Actions
+  const toggleStar = (id: string) => {
+    setFiles(files.map(f => f.id === id ? { ...f, starred: !f.starred } : f))
+  }
+
+  const moveToTrash = (id: string) => {
+    setFiles(files.map(f => f.id === id ? { ...f, deleted: true } : f))
+  }
+
+  const restoreFromTrash = (id: string) => {
+    setFiles(files.map(f => f.id === id ? { ...f, deleted: false } : f))
+  }
+
+  const deletePermanently = (id: string) => {
+    setFiles(files.filter(f => f.id !== id))
+  }
+
+  const handleRename = () => {
+    if (!renamingFile || !newName.trim()) return
+    setFiles(files.map(f => f.id === renamingFile.id ? { ...f, name: newName } : f))
+    setRenamingFile(null)
+    setNewName('')
+  }
+
+  // Icons
   const getIcon = (type: FileType) => {
     switch (type) {
       case 'image': return <ImageIcon className="w-8 h-8 text-purple-500" />
@@ -96,33 +238,77 @@ export default function ArchivistPage() {
     }
   }
 
+  // Calculate Storage
+  const usedStorage = files.length * 0.5 // Dummy calculation: 0.5 GB per file avg for demo
+  const totalStorage = 10
+
   return (
-    <div className="flex h-[calc(100vh-64px)] bg-gray-50 overflow-hidden">
+    <div className="flex h-[calc(100vh-64px)] bg-gray-50 overflow-hidden relative">
       
+      {/* Hidden Input */}
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        className="hidden" 
+        onChange={handleFileChange} 
+      />
+
       {/* LEFT SIDEBAR */}
       <div className="w-64 bg-white border-r border-gray-200 flex flex-col hidden md:flex">
         <div className="p-6">
-          <Button className="w-full bg-purple-600 hover:bg-purple-700 shadow-md mb-6">
-            <UploadCloud className="w-4 h-4 mr-2" /> Загрузить файл
+          <Button 
+            onClick={handleUploadClick} 
+            disabled={uploading}
+            className="w-full bg-purple-600 hover:bg-purple-700 shadow-md mb-6"
+          >
+            {uploading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <UploadCloud className="w-4 h-4 mr-2" />} 
+            {uploading ? 'Загрузка...' : 'Загрузить файл'}
           </Button>
+
+          {uploading && (
+            <div className="mb-6 bg-gray-100 rounded-full h-2 overflow-hidden">
+              <div 
+                className="bg-purple-500 h-full transition-all duration-300" 
+                style={{ width: `${uploadProgress}%` }} 
+              />
+            </div>
+          )}
 
           <nav className="space-y-1">
             <button 
-              onClick={() => setActiveFolder(null)}
+              onClick={() => { setActiveSection('drive'); setActiveFolder(null) }}
               className={cn(
                 "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                activeFolder === null ? "bg-purple-50 text-purple-700" : "text-gray-600 hover:bg-gray-50"
+                activeSection === 'drive' ? "bg-purple-50 text-purple-700" : "text-gray-600 hover:bg-gray-50"
               )}
             >
               <HardDrive className="w-4 h-4" /> Мой диск
             </button>
-            <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50">
+            <button 
+              onClick={() => { setActiveSection('recent'); setActiveFolder(null) }}
+              className={cn(
+                "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                activeSection === 'recent' ? "bg-purple-50 text-purple-700" : "text-gray-600 hover:bg-gray-50"
+              )}
+            >
               <Clock className="w-4 h-4" /> Недавние
             </button>
-            <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50">
+            <button 
+              onClick={() => { setActiveSection('starred'); setActiveFolder(null) }}
+              className={cn(
+                "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                activeSection === 'starred' ? "bg-purple-50 text-purple-700" : "text-gray-600 hover:bg-gray-50"
+              )}
+            >
               <Star className="w-4 h-4" /> Избранное
             </button>
-            <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50">
+            <button 
+              onClick={() => { setActiveSection('trash'); setActiveFolder(null) }}
+              className={cn(
+                "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                activeSection === 'trash' ? "bg-purple-50 text-purple-700" : "text-gray-600 hover:bg-gray-50"
+              )}
+            >
               <Trash2 className="w-4 h-4" /> Корзина
             </button>
           </nav>
@@ -133,11 +319,14 @@ export default function ArchivistPage() {
             </h3>
             <div className="px-3">
               <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden mb-2">
-                <div className="h-full bg-purple-500 w-[65%] rounded-full" />
+                <div 
+                  className="h-full bg-purple-500 rounded-full transition-all duration-500" 
+                  style={{ width: `${Math.min((usedStorage / totalStorage) * 100, 100)}%` }}
+                />
               </div>
               <div className="flex justify-between text-xs text-gray-500">
-                <span>6.5 GB исп.</span>
-                <span>10 GB всего</span>
+                <span>{usedStorage.toFixed(1)} GB исп.</span>
+                <span>{totalStorage} GB всего</span>
               </div>
             </div>
           </div>
@@ -151,15 +340,17 @@ export default function ArchivistPage() {
           <div className="flex items-center gap-2 text-sm text-gray-500">
             <span 
               className="hover:text-purple-600 cursor-pointer hover:underline"
-              onClick={() => setActiveFolder(null)}
+              onClick={() => { setActiveSection('drive'); setActiveFolder(null) }}
             >
-              Мой диск
+              {activeSection === 'drive' ? 'Мой диск' : 
+               activeSection === 'recent' ? 'Недавние' :
+               activeSection === 'starred' ? 'Избранное' : 'Корзина'}
             </span>
-            {activeFolder && (
+            {activeFolder && activeSection === 'drive' && (
               <>
                 <ChevronRight className="w-4 h-4" />
                 <span className="font-medium text-gray-900">
-                  {FOLDERS.find(f => f.id === activeFolder)?.name}
+                  {folders.find(f => f.id === activeFolder)?.name}
                 </span>
               </>
             )}
@@ -200,12 +391,13 @@ export default function ArchivistPage() {
 
         {/* Content Area */}
         <div className="flex-1 overflow-y-auto p-6">
-          {/* Folders Section (Only visible on root) */}
-          {!activeFolder && (
+          
+          {/* Folders Section (Visible on Drive Root) */}
+          {activeSection === 'drive' && !activeFolder && !searchQuery && (
             <div className="mb-8">
               <h2 className="text-sm font-semibold text-gray-900 mb-4">Папки</h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {FOLDERS.map(folder => (
+                {folders.map(folder => (
                   <div 
                     key={folder.id}
                     onClick={() => setActiveFolder(folder.id)}
@@ -225,12 +417,32 @@ export default function ArchivistPage() {
                   </div>
                 ))}
                 {/* Create New Folder Button */}
-                <div className="border-2 border-dashed border-gray-200 rounded-xl flex items-center justify-center p-4 cursor-pointer hover:border-purple-300 hover:bg-purple-50 transition-colors text-gray-400 hover:text-purple-600">
-                  <div className="flex flex-col items-center">
-                     <Plus className="w-6 h-6 mb-1" />
-                     <span className="text-xs font-medium">Новая папка</span>
-                  </div>
-                </div>
+                <Dialog open={isNewFolderOpen} onOpenChange={setIsNewFolderOpen}>
+                  <DialogTrigger asChild>
+                    <div className="border-2 border-dashed border-gray-200 rounded-xl flex items-center justify-center p-4 cursor-pointer hover:border-purple-300 hover:bg-purple-50 transition-colors text-gray-400 hover:text-purple-600">
+                      <div className="flex flex-col items-center">
+                         <Plus className="w-6 h-6 mb-1" />
+                         <span className="text-xs font-medium">Новая папка</span>
+                      </div>
+                    </div>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Создать папку</DialogTitle>
+                      <DialogDescription>
+                        Введите название для новой папки.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <Input 
+                      value={newFolderName} 
+                      onChange={(e) => setNewFolderName(e.target.value)} 
+                      placeholder="Название папки" 
+                    />
+                    <DialogFooter>
+                      <Button onClick={handleCreateFolder}>Создать</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
               </div>
             </div>
           )}
@@ -238,18 +450,22 @@ export default function ArchivistPage() {
           {/* Files Section */}
           <div>
              <h2 className="text-sm font-semibold text-gray-900 mb-4">
-               {activeFolder ? 'Файлы' : 'Недавние файлы'}
+               {searchQuery ? `Результаты поиска: "${searchQuery}"` :
+                activeSection === 'drive' && activeFolder ? folders.find(f => f.id === activeFolder)?.name :
+                activeSection === 'recent' ? 'Недавние файлы' :
+                activeSection === 'starred' ? 'Избранное' :
+                activeSection === 'trash' ? 'Корзина' : 'Файлы'}
              </h2>
              
              {viewMode === 'grid' ? (
                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                 {currentFiles.map(file => (
+                 {currentFiles.length > 0 ? currentFiles.map(file => (
                    <div key={file.id} className="group bg-white p-4 rounded-xl border border-gray-200 hover:border-purple-300 hover:shadow-md cursor-pointer transition-all relative">
                       <div className="flex justify-between items-start mb-3">
                          <div className="p-3 rounded-lg bg-gray-50 group-hover:bg-white transition-colors">
                             {getIcon(file.type)}
                          </div>
-                         {file.starred && <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />}
+                         {file.starred && !file.deleted && <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />}
                       </div>
                       <h3 className="font-medium text-sm text-gray-900 truncate mb-1" title={file.name}>
                         {file.name}
@@ -268,14 +484,42 @@ export default function ArchivistPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>Скачать</DropdownMenuItem>
-                            <DropdownMenuItem>Переименовать</DropdownMenuItem>
-                            <DropdownMenuItem className="text-red-600">Удалить</DropdownMenuItem>
+                            {activeSection === 'trash' ? (
+                              <>
+                                <DropdownMenuItem onClick={() => restoreFromTrash(file.id)}>
+                                  Восстановить
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="text-red-600" onClick={() => deletePermanently(file.id)}>
+                                  Удалить навсегда
+                                </DropdownMenuItem>
+                              </>
+                            ) : (
+                              <>
+                                <DropdownMenuItem>Скачать</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => { setRenamingFile(file); setNewName(file.name) }}>
+                                  Переименовать
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => toggleStar(file.id)}>
+                                  {file.starred ? 'Убрать из избранного' : 'В избранное'}
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem className="text-red-600" onClick={() => moveToTrash(file.id)}>
+                                  Удалить
+                                </DropdownMenuItem>
+                              </>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
                    </div>
-                 ))}
+                 )) : (
+                   <div className="col-span-full py-12 text-center text-gray-400">
+                     <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                       <Search className="w-8 h-8 opacity-20" />
+                     </div>
+                     <p>Здесь пока пусто</p>
+                   </div>
+                 )}
                </div>
              ) : (
                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -294,6 +538,7 @@ export default function ArchivistPage() {
                          <td className="px-6 py-3 font-medium text-gray-900 flex items-center gap-3">
                             {getIcon(file.type)}
                             {file.name}
+                            {file.starred && !file.deleted && <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />}
                          </td>
                          <td className="px-6 py-3 text-gray-500">{file.size}</td>
                          <td className="px-6 py-3 text-gray-500">{file.date}</td>
@@ -311,6 +556,24 @@ export default function ArchivistPage() {
           </div>
         </div>
       </div>
+
+      {/* Rename Dialog */}
+      <Dialog open={!!renamingFile} onOpenChange={(open) => !open && setRenamingFile(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Переименовать файл</DialogTitle>
+          </DialogHeader>
+          <Input 
+            value={newName} 
+            onChange={(e) => setNewName(e.target.value)} 
+            placeholder="Новое имя" 
+          />
+          <DialogFooter>
+            <Button onClick={handleRename}>Сохранить</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   )
 }
