@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
@@ -27,7 +28,32 @@ import { RoleSwitcher } from '@/components/dashboard/role-switcher'
 
 export function DashboardSidebar() {
   const pathname = usePathname()
-  const isCreator = pathname?.startsWith('/dashboard/creator')
+  // Default to pathname detection, but allow override via local storage for testing
+  const [roleOverride, setRoleOverride] = useState<string | null>(null)
+
+  useEffect(() => {
+    // Check for saved role preference
+    const stored = localStorage.getItem('dashboard_role_override')
+    if (stored) setRoleOverride(stored)
+
+    // Listen for role change events
+    const handleRoleChange = () => {
+      const updated = localStorage.getItem('dashboard_role_override')
+      setRoleOverride(updated)
+    }
+
+    window.addEventListener('dashboard-role-change', handleRoleChange)
+    return () => window.removeEventListener('dashboard-role-change', handleRoleChange)
+  }, [])
+
+  const isCreatorPath = pathname?.startsWith('/dashboard/creator')
+  
+  // Logic: 
+  // 1. If override exists, use it.
+  // 2. Else, use pathname detection.
+  const isCreator = roleOverride 
+    ? roleOverride === 'creator' 
+    : isCreatorPath
 
   const advertiserLinks = [
     {

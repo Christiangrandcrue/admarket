@@ -25,23 +25,23 @@ export function RoleSwitcher() {
   const toggleRole = async () => {
     const newRole = currentRole === 'advertiser' ? 'creator' : 'advertiser'
     
-    // 1. Update local state for immediate feedback
+    // 1. Update local state
     setCurrentRole(newRole)
 
-    // 2. Update Supabase user metadata
-    const { error } = await supabase.auth.updateUser({
+    // 2. Save to LocalStorage for Sidebar persistence
+    localStorage.setItem('dashboard_role_override', newRole)
+    
+    // 3. Dispatch event for immediate Sidebar update (no reload needed if on same page type)
+    window.dispatchEvent(new Event('dashboard-role-change'))
+
+    // 4. Update Supabase (optional, for server consistency)
+    await supabase.auth.updateUser({
       data: { role: newRole }
     })
 
-    if (error) {
-      console.error('Failed to update role:', error)
-      alert('Ошибка смены роли')
-      return
-    }
-
-    // 3. Redirect to correct dashboard
+    // 5. Navigate to the correct dashboard root
     const targetPath = newRole === 'creator' ? '/dashboard/creator' : '/dashboard/campaigns'
-    window.location.href = targetPath // Force full reload to update sidebar
+    router.push(targetPath)
   }
 
   return (
