@@ -19,9 +19,9 @@ import {
   Star,
   Plus,
   ChevronRight,
-  X,
-  Check,
-  Loader2
+  Loader2,
+  Pencil,
+  FolderPlus
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -34,6 +34,14 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu"
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+  ContextMenuSeparator,
+  ContextMenuLabel
+} from "@/components/ui/context-menu"
 import {
   Dialog,
   DialogContent,
@@ -336,8 +344,8 @@ export default function ArchivistPage() {
       {/* MAIN CONTENT */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Bar */}
-        <div className="h-16 border-b border-gray-200 bg-white flex items-center justify-between px-6">
-          <div className="flex items-center gap-2 text-sm text-gray-500">
+        <div className="h-16 border-b border-gray-200 bg-white flex items-center justify-between px-4 md:px-6 shrink-0">
+          <div className="flex items-center gap-2 text-sm text-gray-500 overflow-hidden whitespace-nowrap">
             <span 
               className="hover:text-purple-600 cursor-pointer hover:underline"
               onClick={() => { setActiveSection('drive'); setActiveFolder(null) }}
@@ -348,16 +356,23 @@ export default function ArchivistPage() {
             </span>
             {activeFolder && activeSection === 'drive' && (
               <>
-                <ChevronRight className="w-4 h-4" />
-                <span className="font-medium text-gray-900">
+                <ChevronRight className="w-4 h-4 shrink-0" />
+                <span className="font-medium text-gray-900 truncate">
                   {folders.find(f => f.id === activeFolder)?.name}
                 </span>
               </>
             )}
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="relative w-64">
+          <div className="flex items-center gap-2 md:gap-3">
+            {/* Mobile Actions */}
+            <div className="md:hidden flex items-center gap-1">
+               <Button variant="ghost" size="sm" onClick={handleUploadClick}>
+                 <UploadCloud className="w-5 h-5" />
+               </Button>
+            </div>
+
+            <div className="relative w-32 md:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input 
                 placeholder="Поиск..." 
@@ -366,7 +381,7 @@ export default function ArchivistPage() {
                 onChange={e => setSearchQuery(e.target.value)}
               />
             </div>
-            <div className="flex items-center border rounded-lg p-1 bg-gray-50">
+            <div className="flex items-center border rounded-lg p-1 bg-gray-50 shrink-0">
               <button 
                 onClick={() => setViewMode('grid')}
                 className={cn(
@@ -390,12 +405,17 @@ export default function ArchivistPage() {
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-4 md:p-6">
           
           {/* Folders Section (Visible on Drive Root) */}
           {activeSection === 'drive' && !activeFolder && !searchQuery && (
             <div className="mb-8">
-              <h2 className="text-sm font-semibold text-gray-900 mb-4">Папки</h2>
+              <div className="flex items-center justify-between mb-4">
+                 <h2 className="text-sm font-semibold text-gray-900">Папки</h2>
+                 <Button variant="ghost" size="sm" className="text-purple-600 hover:text-purple-700 md:hidden" onClick={() => setIsNewFolderOpen(true)}>
+                   <Plus className="w-4 h-4 mr-1" /> Создать
+                 </Button>
+              </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {folders.map(folder => (
                   <div 
@@ -403,11 +423,11 @@ export default function ArchivistPage() {
                     onClick={() => setActiveFolder(folder.id)}
                     className="group bg-white p-4 rounded-xl border border-gray-200 hover:border-purple-300 hover:shadow-sm cursor-pointer transition-all flex items-center gap-4"
                   >
-                    <div className={cn("w-12 h-12 rounded-lg flex items-center justify-center", folder.bg)}>
+                    <div className={cn("w-12 h-12 rounded-lg flex items-center justify-center shrink-0", folder.bg)}>
                       <Folder className={cn("w-6 h-6", folder.color)} />
                     </div>
-                    <div>
-                      <div className="font-medium text-gray-900 group-hover:text-purple-700">
+                    <div className="min-w-0">
+                      <div className="font-medium text-gray-900 group-hover:text-purple-700 truncate">
                         {folder.name}
                       </div>
                       <div className="text-xs text-gray-500">
@@ -416,10 +436,10 @@ export default function ArchivistPage() {
                     </div>
                   </div>
                 ))}
-                {/* Create New Folder Button */}
+                {/* Create New Folder Button (Desktop) */}
                 <Dialog open={isNewFolderOpen} onOpenChange={setIsNewFolderOpen}>
                   <DialogTrigger asChild>
-                    <div className="border-2 border-dashed border-gray-200 rounded-xl flex items-center justify-center p-4 cursor-pointer hover:border-purple-300 hover:bg-purple-50 transition-colors text-gray-400 hover:text-purple-600">
+                    <div className="hidden md:flex border-2 border-dashed border-gray-200 rounded-xl items-center justify-center p-4 cursor-pointer hover:border-purple-300 hover:bg-purple-50 transition-colors text-gray-400 hover:text-purple-600">
                       <div className="flex flex-col items-center">
                          <Plus className="w-6 h-6 mb-1" />
                          <span className="text-xs font-medium">Новая папка</span>
@@ -460,58 +480,93 @@ export default function ArchivistPage() {
              {viewMode === 'grid' ? (
                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
                  {currentFiles.length > 0 ? currentFiles.map(file => (
-                   <div key={file.id} className="group bg-white p-4 rounded-xl border border-gray-200 hover:border-purple-300 hover:shadow-md cursor-pointer transition-all relative">
-                      <div className="flex justify-between items-start mb-3">
-                         <div className="p-3 rounded-lg bg-gray-50 group-hover:bg-white transition-colors">
-                            {getIcon(file.type)}
-                         </div>
-                         {file.starred && !file.deleted && <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />}
-                      </div>
-                      <h3 className="font-medium text-sm text-gray-900 truncate mb-1" title={file.name}>
-                        {file.name}
-                      </h3>
-                      <div className="flex justify-between items-center text-xs text-gray-500">
-                         <span>{file.size}</span>
-                         <span>{file.date}</span>
-                      </div>
-                      
-                      {/* Hover Actions */}
-                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full bg-white shadow-sm">
-                              <MoreVertical className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            {activeSection === 'trash' ? (
-                              <>
-                                <DropdownMenuItem onClick={() => restoreFromTrash(file.id)}>
-                                  Восстановить
-                                </DropdownMenuItem>
-                                <DropdownMenuItem className="text-red-600" onClick={() => deletePermanently(file.id)}>
-                                  Удалить навсегда
-                                </DropdownMenuItem>
-                              </>
-                            ) : (
-                              <>
-                                <DropdownMenuItem>Скачать</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => { setRenamingFile(file); setNewName(file.name) }}>
-                                  Переименовать
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => toggleStar(file.id)}>
-                                  {file.starred ? 'Убрать из избранного' : 'В избранное'}
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem className="text-red-600" onClick={() => moveToTrash(file.id)}>
-                                  Удалить
-                                </DropdownMenuItem>
-                              </>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                   </div>
+                   <ContextMenu key={file.id}>
+                     <ContextMenuTrigger>
+                       <div className="group bg-white p-4 rounded-xl border border-gray-200 hover:border-purple-300 hover:shadow-md cursor-pointer transition-all relative h-full flex flex-col">
+                          <div className="flex justify-between items-start mb-3">
+                             <div className="p-3 rounded-lg bg-gray-50 group-hover:bg-white transition-colors">
+                                {getIcon(file.type)}
+                             </div>
+                             {file.starred && !file.deleted && <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />}
+                          </div>
+                          <h3 className="font-medium text-sm text-gray-900 truncate mb-1" title={file.name}>
+                            {file.name}
+                          </h3>
+                          <div className="flex justify-between items-center text-xs text-gray-500 mt-auto">
+                             <span>{file.size}</span>
+                             <span>{file.date}</span>
+                          </div>
+                          
+                          {/* Mobile/Touch Dropdown */}
+                          <div className="absolute top-2 right-2 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full bg-white shadow-sm">
+                                  <MoreVertical className="w-4 h-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                {activeSection === 'trash' ? (
+                                  <>
+                                    <DropdownMenuItem onClick={() => restoreFromTrash(file.id)}>
+                                      Восстановить
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem className="text-red-600" onClick={() => deletePermanently(file.id)}>
+                                      Удалить навсегда
+                                    </DropdownMenuItem>
+                                  </>
+                                ) : (
+                                  <>
+                                    <DropdownMenuItem>Скачать</DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => { setRenamingFile(file); setNewName(file.name) }}>
+                                      Переименовать
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => toggleStar(file.id)}>
+                                      {file.starred ? 'Убрать из избранного' : 'В избранное'}
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem className="text-red-600" onClick={() => moveToTrash(file.id)}>
+                                      Удалить
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                       </div>
+                     </ContextMenuTrigger>
+                     <ContextMenuContent>
+                        <ContextMenuLabel>{file.name}</ContextMenuLabel>
+                        <ContextMenuSeparator />
+                        {activeSection === 'trash' ? (
+                          <>
+                            <ContextMenuItem onClick={() => restoreFromTrash(file.id)}>
+                              <Clock className="w-4 h-4 mr-2" /> Восстановить
+                            </ContextMenuItem>
+                            <ContextMenuItem className="text-red-600" onClick={() => deletePermanently(file.id)}>
+                              <Trash2 className="w-4 h-4 mr-2" /> Удалить навсегда
+                            </ContextMenuItem>
+                          </>
+                        ) : (
+                          <>
+                            <ContextMenuItem>
+                              <Download className="w-4 h-4 mr-2" /> Скачать
+                            </ContextMenuItem>
+                            <ContextMenuItem onClick={() => { setRenamingFile(file); setNewName(file.name) }}>
+                              <Pencil className="w-4 h-4 mr-2" /> Переименовать
+                            </ContextMenuItem>
+                            <ContextMenuItem onClick={() => toggleStar(file.id)}>
+                              <Star className={cn("w-4 h-4 mr-2", file.starred ? "fill-yellow-400 text-yellow-400" : "")} />
+                              {file.starred ? 'Убрать из избранного' : 'В избранное'}
+                            </ContextMenuItem>
+                            <ContextMenuSeparator />
+                            <ContextMenuItem className="text-red-600" onClick={() => moveToTrash(file.id)}>
+                              <Trash2 className="w-4 h-4 mr-2" /> Удалить
+                            </ContextMenuItem>
+                          </>
+                        )}
+                     </ContextMenuContent>
+                   </ContextMenu>
                  )) : (
                    <div className="col-span-full py-12 text-center text-gray-400">
                      <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -534,20 +589,66 @@ export default function ArchivistPage() {
                    </thead>
                    <tbody>
                      {currentFiles.map(file => (
-                       <tr key={file.id} className="border-b border-gray-50 hover:bg-purple-50/50 transition-colors group">
-                         <td className="px-6 py-3 font-medium text-gray-900 flex items-center gap-3">
-                            {getIcon(file.type)}
-                            {file.name}
-                            {file.starred && !file.deleted && <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />}
-                         </td>
-                         <td className="px-6 py-3 text-gray-500">{file.size}</td>
-                         <td className="px-6 py-3 text-gray-500">{file.date}</td>
-                         <td className="px-6 py-3 text-right">
-                           <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100">
-                             <Download className="w-4 h-4" />
-                           </Button>
-                         </td>
-                       </tr>
+                       <ContextMenu key={file.id}>
+                         <ContextMenuTrigger asChild>
+                           <tr className="border-b border-gray-50 hover:bg-purple-50/50 transition-colors group">
+                             <td className="px-6 py-3 font-medium text-gray-900 flex items-center gap-3">
+                                {getIcon(file.type)}
+                                {file.name}
+                                {file.starred && !file.deleted && <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />}
+                             </td>
+                             <td className="px-6 py-3 text-gray-500">{file.size}</td>
+                             <td className="px-6 py-3 text-gray-500">{file.date}</td>
+                             <td className="px-6 py-3 text-right">
+                               <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100">
+                                      <MoreVertical className="w-4 h-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    {/* Copy-paste same menu logic */}
+                                    {activeSection === 'trash' ? (
+                                      <>
+                                        <DropdownMenuItem onClick={() => restoreFromTrash(file.id)}>Восстановить</DropdownMenuItem>
+                                        <DropdownMenuItem className="text-red-600" onClick={() => deletePermanently(file.id)}>Удалить навсегда</DropdownMenuItem>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <DropdownMenuItem>Скачать</DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => { setRenamingFile(file); setNewName(file.name) }}>Переименовать</DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => toggleStar(file.id)}>{file.starred ? 'Убрать из избранного' : 'В избранное'}</DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem className="text-red-600" onClick={() => moveToTrash(file.id)}>Удалить</DropdownMenuItem>
+                                      </>
+                                    )}
+                                  </DropdownMenuContent>
+                               </DropdownMenu>
+                             </td>
+                           </tr>
+                         </ContextMenuTrigger>
+                         <ContextMenuContent>
+                            {/* Same Context Menu Content */}
+                            <ContextMenuLabel>{file.name}</ContextMenuLabel>
+                            <ContextMenuSeparator />
+                            {activeSection === 'trash' ? (
+                              <>
+                                <ContextMenuItem onClick={() => restoreFromTrash(file.id)}>Восстановить</ContextMenuItem>
+                                <ContextMenuItem className="text-red-600" onClick={() => deletePermanently(file.id)}>Удалить навсегда</ContextMenuItem>
+                              </>
+                            ) : (
+                              <>
+                                <ContextMenuItem>Скачать</ContextMenuItem>
+                                <ContextMenuItem onClick={() => { setRenamingFile(file); setNewName(file.name) }}>Переименовать</ContextMenuItem>
+                                <ContextMenuItem onClick={() => toggleStar(file.id)}>
+                                  {file.starred ? 'Убрать из избранного' : 'В избранное'}
+                                </ContextMenuItem>
+                                <ContextMenuSeparator />
+                                <ContextMenuItem className="text-red-600" onClick={() => moveToTrash(file.id)}>Удалить</ContextMenuItem>
+                              </>
+                            )}
+                         </ContextMenuContent>
+                       </ContextMenu>
                      ))}
                    </tbody>
                  </table>
