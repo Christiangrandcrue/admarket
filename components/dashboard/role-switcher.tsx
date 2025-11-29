@@ -49,11 +49,11 @@ export function RoleSwitcher() {
       <Button 
         variant="outline" 
         size="sm" 
-        className="w-full flex gap-2 text-xs border-dashed border-purple-300 text-purple-700 bg-purple-50 hover:bg-purple-100"
+        className="w-full flex gap-2 text-xs border-2 border-red-500 text-red-600 bg-red-50 hover:bg-red-100 font-bold"
         onClick={toggleRole}
       >
         <Repeat className="w-3 h-3" />
-        Сменить роль ({currentRole === 'advertiser' ? 'Рекл.' : 'Креатор'})
+        СМЕНИТЬ РОЛЬ (ADMIN)
       </Button>
       <div className="text-[10px] text-center text-gray-400 mt-1">
         (Только для тестов)
