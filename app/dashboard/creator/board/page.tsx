@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,90 +13,57 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { MapPin, Clock, DollarSign, ArrowRight, Search, Filter, SlidersHorizontal } from "lucide-react"
+import { MapPin, Clock, Search, SlidersHorizontal } from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
 
-// Mock Data for Jobs
-const MOCK_JOBS = [
-  {
-    id: 1,
-    title: 'Реклама новой коллекции кроссовок',
-    company: 'Nike',
-    logo_initials: 'Ni',
-    description: 'Ищем креаторов в нише Fashion/Lifestyle для создания коротких Reels (15-30 сек) с распаковкой и примеркой.',
-    category: 'Fashion',
-    platform: 'Instagram',
-    budget: '50,000 ₽',
-    deadline: '5 дней',
-    location: 'Москва, РФ',
-    isRecommended: true,
-    tags: ['Reels', 'Unboxing']
-  },
-  {
-    id: 2,
-    title: 'Обзор смартфона Samsung S25',
-    company: 'Samsung',
-    logo_initials: 'Sa',
-    description: 'Нужен подробный обзор фишек камеры нового флагмана. Формат - YouTube видео (5-7 минут).',
-    category: 'Tech',
-    platform: 'YouTube',
-    budget: '120,000 ₽',
-    deadline: '10 дней',
-    location: 'РФ (Онлайн)',
-    isRecommended: false,
-    tags: ['Review', 'Tech']
-  },
-  {
-    id: 3,
-    title: 'Интеграция мобильного приложения для йоги',
-    company: 'ZenApp',
-    logo_initials: 'Ze',
-    description: 'Нативная интеграция в сторис. Показать, как приложение помогает расслабиться после рабочего дня.',
-    category: 'Health',
-    platform: 'Instagram',
-    budget: '15,000 ₽',
-    deadline: '3 дня',
-    location: 'Весь мир',
-    isRecommended: true,
-    tags: ['Stories', 'Lifestyle']
-  },
-  {
-    id: 4,
-    title: 'Челлендж с острыми чипсами',
-    company: 'HotChips',
-    logo_initials: 'Ho',
-    description: 'Веселый TikTok челлендж. Нужно съесть чипс и не запивать 1 минуту.',
-    category: 'Food',
-    platform: 'TikTok',
-    budget: '25,000 ₽',
-    deadline: '7 дней',
-    location: 'РФ',
-    isRecommended: false,
-    tags: ['Challenge', 'Fun']
-  },
-  {
-    id: 5,
-    title: 'Реклама онлайн-курсов английского',
-    company: 'SkyEng',
-    logo_initials: 'Sk',
-    description: 'Рассказать про свой опыт изучения языка. Промокод для подписчиков.',
-    category: 'Education',
-    platform: 'YouTube',
-    budget: '60,000 ₽',
-    deadline: '14 дней',
-    location: 'Онлайн',
-    isRecommended: false,
-    tags: ['Education', 'Integration']
-  }
-]
+// DB Types
+interface Campaign {
+  id: string
+  title: string
+  description: string
+  platform: string
+  category: string
+  budget: number
+  deadline: string
+  status: string
+  requirements: string
+  created_at: string
+}
 
 export default function JobBoardPage() {
+  const [jobs, setJobs] = useState<Campaign[]>([])
+  const [loading, setLoading] = useState(true)
   const [filterCategory, setFilterCategory] = useState<string>('all')
   const [filterPlatform, setFilterPlatform] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const supabase = createClient()
 
-  const filteredJobs = MOCK_JOBS.filter(job => {
-    const matchesCategory = filterCategory === 'all' || job.category === filterCategory
-    const matchesPlatform = filterPlatform === 'all' || job.platform === filterPlatform
+  // 1. Fetch Jobs from DB
+  useEffect(() => {
+    fetchJobs()
+  }, [])
+
+  const fetchJobs = async () => {
+    setLoading(true)
+    // Select all active campaigns
+    const { data, error } = await supabase
+      .from('campaigns')
+      .select('*')
+      .eq('status', 'active') // Only active jobs
+      .order('created_at', { ascending: false })
+
+    if (data) {
+      setJobs(data)
+    } else if (error) {
+      console.error('Error fetching jobs:', error)
+    }
+    setLoading(false)
+  }
+
+  // 2. Apply Filters Locally (can be moved to DB query for large datasets)
+  const filteredJobs = jobs.filter(job => {
+    const matchesCategory = filterCategory === 'all' || job.category.toLowerCase() === filterCategory.toLowerCase()
+    const matchesPlatform = filterPlatform === 'all' || job.platform.toLowerCase() === filterPlatform.toLowerCase()
     const matchesSearch = job.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           job.description.toLowerCase().includes(searchQuery.toLowerCase())
     return matchesCategory && matchesPlatform && matchesSearch
@@ -139,11 +106,13 @@ export default function JobBoardPage() {
                 <SelectGroup>
                   <SelectLabel>Ниши</SelectLabel>
                   <SelectItem value="all">Все категории</SelectItem>
-                  <SelectItem value="Fashion">Fashion</SelectItem>
-                  <SelectItem value="Tech">Tech</SelectItem>
-                  <SelectItem value="Food">Food</SelectItem>
-                  <SelectItem value="Health">Health</SelectItem>
-                  <SelectItem value="Education">Education</SelectItem>
+                  <SelectItem value="fashion">Fashion</SelectItem>
+                  <SelectItem value="tech">Tech</SelectItem>
+                  <SelectItem value="food">Food</SelectItem>
+                  <SelectItem value="health">Health</SelectItem>
+                  <SelectItem value="education">Education</SelectItem>
+                  <SelectItem value="crypto">Crypto</SelectItem>
+                  <SelectItem value="lifestyle">Lifestyle</SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>
@@ -159,9 +128,10 @@ export default function JobBoardPage() {
                 <SelectGroup>
                   <SelectLabel>Соцсети</SelectLabel>
                   <SelectItem value="all">Все платформы</SelectItem>
-                  <SelectItem value="Instagram">Instagram</SelectItem>
-                  <SelectItem value="YouTube">YouTube</SelectItem>
-                  <SelectItem value="TikTok">TikTok</SelectItem>
+                  <SelectItem value="instagram">Instagram</SelectItem>
+                  <SelectItem value="youtube">YouTube</SelectItem>
+                  <SelectItem value="tiktok">TikTok</SelectItem>
+                  <SelectItem value="telegram">Telegram</SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>
@@ -169,7 +139,7 @@ export default function JobBoardPage() {
 
           {/* More Filters Button */}
           <div className="md:col-span-1">
-            <Button variant="outline" className="w-full" title="Расширенные фильтры">
+            <Button variant="outline" className="w-full" title="Сбросить" onClick={() => {setFilterCategory('all'); setFilterPlatform('all'); setSearchQuery('')}}>
               <SlidersHorizontal className="h-5 w-5 text-gray-500" />
             </Button>
           </div>
@@ -178,23 +148,24 @@ export default function JobBoardPage() {
 
       {/* Jobs List */}
       <div className="space-y-4">
-        {filteredJobs.length > 0 ? (
+        {loading ? (
+          <div className="text-center py-12">
+             <div className="animate-spin w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+             <p className="text-gray-500">Загружаем заказы...</p>
+          </div>
+        ) : filteredJobs.length > 0 ? (
           filteredJobs.map((job) => (
             <div key={job.id} className="group bg-white p-6 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md hover:border-purple-200 transition-all relative overflow-hidden">
-              {job.isRecommended && (
-                <div className="absolute top-0 right-0 bg-green-100 text-green-700 text-xs font-bold px-3 py-1 rounded-bl-xl">
-                  Рекомендуем
-                </div>
-              )}
               
               <div className="flex flex-col md:flex-row gap-6">
-                {/* Company Logo */}
+                {/* Company Logo (Auto-generated from Platform) */}
                 <div className="flex-shrink-0">
                   <div className={`w-16 h-16 rounded-xl flex items-center justify-center font-bold text-2xl shadow-inner
-                    ${job.category === 'Tech' ? 'bg-blue-100 text-blue-600' : 
-                      job.category === 'Fashion' ? 'bg-pink-100 text-pink-600' :
-                      'bg-purple-100 text-purple-600'}`}>
-                    {job.logo_initials}
+                    ${job.platform === 'youtube' ? 'bg-red-100 text-red-600' : 
+                      job.platform === 'instagram' ? 'bg-pink-100 text-pink-600' :
+                      job.platform === 'telegram' ? 'bg-blue-100 text-blue-500' :
+                      'bg-black text-white'}`}>
+                    {job.platform.slice(0, 2).toUpperCase()}
                   </div>
                 </div>
 
@@ -205,7 +176,9 @@ export default function JobBoardPage() {
                       {job.title}
                     </h3>
                     <div className="flex items-center gap-2">
-                       <span className="text-lg font-bold text-gray-900">{job.budget}</span>
+                       <span className="text-lg font-bold text-gray-900">
+                         {new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(job.budget)}
+                       </span>
                     </div>
                   </div>
 
@@ -213,16 +186,16 @@ export default function JobBoardPage() {
 
                   {/* Tags & Meta */}
                   <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
-                    <div className="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded-md">
-                      <MapPin className="w-3.5 h-3.5" /> {job.location}
+                    <div className="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded-md capitalize">
+                      <MapPin className="w-3.5 h-3.5" /> {job.platform}
                     </div>
                     <div className="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded-md">
-                      <Clock className="w-3.5 h-3.5" /> {job.deadline}
+                      <Clock className="w-3.5 h-3.5" /> {new Date(job.created_at).toLocaleDateString()}
                     </div>
                     <div className="flex gap-2">
-                       {job.tags.map(tag => (
-                         <Badge key={tag} variant="secondary" className="bg-gray-100 text-gray-600 border-0">#{tag}</Badge>
-                       ))}
+                       <Badge variant="secondary" className="bg-gray-100 text-gray-600 border-0 uppercase text-[10px]">
+                         {job.category}
+                       </Badge>
                     </div>
                   </div>
                 </div>
@@ -245,7 +218,7 @@ export default function JobBoardPage() {
                <Search className="w-8 h-8 text-gray-400" />
             </div>
             <h3 className="text-lg font-medium text-gray-900">Ничего не найдено</h3>
-            <p className="text-gray-500">Попробуйте изменить фильтры или поисковый запрос.</p>
+            <p className="text-gray-500">В данный момент нет активных заказов по вашим критериям.</p>
             <Button 
               variant="link" 
               onClick={() => {setFilterCategory('all'); setFilterPlatform('all'); setSearchQuery('')}}
