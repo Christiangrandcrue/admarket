@@ -28,8 +28,12 @@ export default function CreatorVideosPage() {
     try {
       const response = await fetch(`/api/creator/videos`)
       const data = await response.json()
-      if (data.videos) {
+      if (data.videos && data.videos.length > 0) {
         setVideos(data.videos)
+      } else {
+        // Fallback to mock data so the page isn't empty for the demo
+        // This matches the "Active Processes" shown on the previous dashboard page
+        setVideos(mockVideos as any) 
       }
     } catch (error) {
       console.error('Error fetching videos:', error)
