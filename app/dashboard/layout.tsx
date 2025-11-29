@@ -4,6 +4,7 @@
  */
 
 import { DashboardSidebar } from '@/components/dashboard/sidebar'
+import { OnboardingTutorial } from '@/components/onboarding/tutorial'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -19,6 +20,7 @@ export default function DashboardLayout({
       <main className="flex-1 w-full bg-gray-50">
         {children}
       </main>
+      <OnboardingTutorial />
     </div>
   )
 }

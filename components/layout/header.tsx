@@ -66,6 +66,7 @@ export function Header() {
         <div className="hidden items-center gap-3 md:flex">
            {/* ADMIN SWITCHER IN HEADER */}
            <Button 
+             id="header-role-switcher"
              variant="outline" 
              size="sm" 
              onClick={toggleRole}
