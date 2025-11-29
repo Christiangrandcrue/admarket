@@ -11,97 +11,201 @@ import {
   Paperclip,
   Smile,
   Check,
-  CheckCheck
+  CheckCheck,
+  MessageSquare
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
+import { createClient } from '@/lib/supabase/client'
+import { User } from '@supabase/supabase-js'
 
 // Types
 interface Message {
   id: string
   content: string
-  senderId: string
-  createdAt: Date
-  isRead: boolean
+  sender_id: string
+  created_at: string
+  is_read: boolean
 }
 
 interface Chat {
   id: string
+  partnerId: string
   partnerName: string
-  partnerAvatar: string
+  partnerAvatar?: string
   lastMessage: string
   lastMessageTime: string
   unreadCount: number
   isOnline: boolean
 }
 
+interface UserProfile {
+  id: string
+  full_name?: string
+  email?: string
+  role?: string
+}
+
 export default function MessagesPage() {
-  const [selectedChatId, setSelectedChatId] = useState<string | null>('1')
+  const [supabase] = useState(() => createClient())
+  const [currentUser, setCurrentUser] = useState<User | null>(null)
+  const [chats, setChats] = useState<Chat[]>([])
+  const [selectedChatId, setSelectedChatId] = useState<string | null>(null)
+  const [messages, setMessages] = useState<Message[]>([])
   const [messageInput, setMessageInput] = useState('')
+  const [loading, setLoading] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  // Mock Data
-  const chats: Chat[] = [
-    {
-      id: '1',
-      partnerName: 'Samsung Electronics',
-      partnerAvatar: 'Sa',
-      lastMessage: 'Отлично, ждем черновик видео завтра!',
-      lastMessageTime: '10:42',
-      unreadCount: 0,
-      isOnline: true
-    },
-    {
-      id: '2',
-      partnerName: 'Nike Russia',
-      partnerAvatar: 'Ni',
-      lastMessage: 'Можем обсудить бюджет?',
-      lastMessageTime: 'Вчера',
-      unreadCount: 2,
-      isOnline: false
-    },
-    {
-      id: '3',
-      partnerName: 'ZenApp',
-      partnerAvatar: 'Ze',
-      lastMessage: 'Оплата прошла успешно',
-      lastMessageTime: 'Пн',
-      unreadCount: 0,
-      isOnline: false
+  // 1. Init: Get User
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setCurrentUser(user)
+      if (user) {
+        fetchChats(user.id)
+      }
     }
-  ]
+    getUser()
+  }, [])
 
-  const [messages, setMessages] = useState<Message[]>([
-    { id: '1', senderId: 'partner', content: 'Здравствуйте! Нам понравился ваш профиль.', createdAt: new Date(), isRead: true },
-    { id: '2', senderId: 'me', content: 'Добрый день! Спасибо, готов обсудить сотрудничество.', createdAt: new Date(), isRead: true },
-    { id: '3', senderId: 'partner', content: 'Супер. Нам нужно видео на 30 секунд для YouTube Shorts.', createdAt: new Date(), isRead: true },
-    { id: '4', senderId: 'me', content: 'Понял. Есть конкретное ТЗ или референсы?', createdAt: new Date(), isRead: true },
-    { id: '5', senderId: 'partner', content: 'Отлично, ждем черновик видео завтра!', createdAt: new Date(), isRead: true },
-  ])
+  // 2. Fetch Chats
+  const fetchChats = async (userId: string) => {
+    try {
+      // Fetch conversations where user is a participant
+      const { data: conversations, error } = await supabase
+        .from('conversations')
+        .select('*')
+        .contains('participant_ids', [userId])
+        .order('updated_at', { ascending: false })
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+      if (error) throw error
+
+      if (!conversations || conversations.length === 0) {
+        setChats([])
+        setLoading(false)
+        return
+      }
+
+      // Get partner IDs
+      const partnerIds = new Set<string>()
+      conversations.forEach(c => {
+        const pid = c.participant_ids.find((id: string) => id !== userId)
+        if (pid) partnerIds.add(pid)
+      })
+
+      // Fetch partner profiles
+      const { data: profiles } = await supabase
+        .from('users')
+        .select('id, full_name, email')
+        .in('id', Array.from(partnerIds))
+
+      const profilesMap = new Map(profiles?.map(p => [p.id, p]))
+
+      // Format chats
+      const formattedChats: Chat[] = await Promise.all(conversations.map(async (c) => {
+        const partnerId = c.participant_ids.find((id: string) => id !== userId)
+        const partner = profilesMap.get(partnerId)
+        
+        // Fetch last message
+        const { data: lastMsg } = await supabase
+          .from('messages')
+          .select('content, created_at, is_read, sender_id')
+          .eq('conversation_id', c.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single()
+
+        return {
+          id: c.id,
+          partnerId: partnerId || '',
+          partnerName: partner?.full_name || partner?.email || 'Unknown User',
+          partnerAvatar: (partner?.full_name?.[0] || partner?.email?.[0] || '?').toUpperCase(),
+          lastMessage: lastMsg?.content || 'Нет сообщений',
+          lastMessageTime: lastMsg ? new Date(lastMsg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '',
+          unreadCount: (lastMsg && !lastMsg.is_read && lastMsg.sender_id !== userId) ? 1 : 0, // Simplified
+          isOnline: false // TODO: Implement presence
+        }
+      }))
+
+      setChats(formattedChats)
+    } catch (error) {
+      console.error('Error loading chats:', error)
+    } finally {
+      setLoading(false)
+    }
   }
 
+  // 3. Fetch Messages for Selected Chat
   useEffect(() => {
-    scrollToBottom()
-  }, [messages])
+    if (!selectedChatId) return
 
-  const handleSendMessage = () => {
-    if (!messageInput.trim()) return
-
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      senderId: 'me',
-      content: messageInput,
-      createdAt: new Date(),
-      isRead: false
+    const fetchMessages = async () => {
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('conversation_id', selectedChatId)
+        .order('created_at', { ascending: true })
+      
+      if (data) {
+        setMessages(data)
+        // Mark as read
+        if (currentUser) {
+           // Ideally we mark unread messages from partner as read here
+        }
+      }
     }
 
-    setMessages([...messages, newMessage])
-    setMessageInput('')
+    fetchMessages()
+
+    // Realtime Subscription
+    const channel = supabase
+      .channel(`chat:${selectedChatId}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'messages',
+        filter: `conversation_id=eq.${selectedChatId}`
+      }, (payload) => {
+        setMessages(prev => [...prev, payload.new as Message])
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [selectedChatId, currentUser])
+
+  // Auto-scroll
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
+
+  const handleSendMessage = async () => {
+    if (!messageInput.trim() || !selectedChatId || !currentUser) return
+
+    const text = messageInput
+    setMessageInput('') // Optimistic clear
+
+    try {
+      const { error } = await supabase
+        .from('messages')
+        .insert({
+          conversation_id: selectedChatId,
+          sender_id: currentUser.id,
+          content: text
+        })
+
+      if (error) throw error
+      
+      // Update last message in chat list locally (optional, or wait for refetch)
+      // fetchChats(currentUser.id) // Refresh list to update last message
+    } catch (error) {
+      console.error('Error sending message:', error)
+      alert('Ошибка отправки')
+      setMessageInput(text) // Restore on fail
+    }
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -111,6 +215,8 @@ export default function MessagesPage() {
     }
   }
 
+  const selectedChat = chats.find(c => c.id === selectedChatId)
+
   return (
     <div className="flex h-[calc(100vh-64px)] bg-white">
       {/* Left Sidebar: Chat List */}
@@ -119,71 +225,80 @@ export default function MessagesPage() {
           <div className="relative">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
             <Input 
-              placeholder="Поиск сообщений..." 
+              placeholder="Поиск..." 
               className="pl-9 bg-gray-50 border-transparent focus:bg-white transition-colors" 
             />
           </div>
         </div>
         
         <div className="flex-1 overflow-y-auto">
-          {chats.map((chat) => (
-            <div 
-              key={chat.id}
-              onClick={() => setSelectedChatId(chat.id)}
-              className={cn(
-                "p-4 flex gap-3 cursor-pointer transition-colors border-b border-gray-100 hover:bg-white",
-                selectedChatId === chat.id ? "bg-white border-l-4 border-l-purple-600 shadow-sm" : "border-l-4 border-l-transparent"
-              )}
-            >
-              <div className="relative">
-                <Avatar className="h-12 w-12">
-                  <AvatarImage src="" />
-                  <AvatarFallback className={cn(
-                    "text-white font-bold",
-                    chat.id === '1' ? 'bg-blue-500' : chat.id === '2' ? 'bg-black' : 'bg-green-500'
-                  )}>
-                    {chat.partnerAvatar}
-                  </AvatarFallback>
-                </Avatar>
-                {chat.isOnline && (
-                  <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+          {loading ? (
+            <div className="p-4 text-center text-gray-400 text-sm">Загрузка чатов...</div>
+          ) : chats.length === 0 ? (
+            <div className="p-8 text-center text-gray-400">
+              <MessageSquare className="w-10 h-10 mx-auto mb-2 opacity-20" />
+              <p className="text-sm">У вас пока нет чатов</p>
+            </div>
+          ) : (
+            chats.map((chat) => (
+              <div 
+                key={chat.id}
+                onClick={() => setSelectedChatId(chat.id)}
+                className={cn(
+                  "p-4 flex gap-3 cursor-pointer transition-colors border-b border-gray-100 hover:bg-white",
+                  selectedChatId === chat.id ? "bg-white border-l-4 border-l-purple-600 shadow-sm" : "border-l-4 border-l-transparent"
                 )}
-              </div>
-              
-              <div className="flex-1 min-w-0">
-                <div className="flex justify-between items-start mb-1">
-                  <span className="font-semibold text-gray-900 truncate">{chat.partnerName}</span>
-                  <span className="text-xs text-gray-400 whitespace-nowrap ml-2">{chat.lastMessageTime}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <p className="text-sm text-gray-600 truncate pr-2">{chat.lastMessage}</p>
-                  {chat.unreadCount > 0 && (
-                    <span className="bg-purple-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
-                      {chat.unreadCount}
-                    </span>
+              >
+                <div className="relative">
+                  <Avatar className="h-12 w-12">
+                    <AvatarImage src="" />
+                    <AvatarFallback className={cn(
+                      "text-white font-bold bg-gradient-to-br from-purple-400 to-blue-500"
+                    )}>
+                      {chat.partnerAvatar}
+                    </AvatarFallback>
+                  </Avatar>
+                  {chat.isOnline && (
+                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
                   )}
                 </div>
+                
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-start mb-1">
+                    <span className="font-semibold text-gray-900 truncate">{chat.partnerName}</span>
+                    <span className="text-xs text-gray-400 whitespace-nowrap ml-2">{chat.lastMessageTime}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <p className="text-sm text-gray-600 truncate pr-2">{chat.lastMessage}</p>
+                    {chat.unreadCount > 0 && (
+                      <span className="bg-purple-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                        {chat.unreadCount}
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
 
       {/* Right Area: Chat Window */}
       <div className="flex-1 flex flex-col bg-[#F3F4F6]">
-        {selectedChatId ? (
+        {selectedChatId && selectedChat ? (
           <>
             {/* Chat Header */}
             <div className="h-16 px-6 border-b border-gray-200 bg-white flex items-center justify-between shadow-sm z-10">
               <div className="flex items-center gap-3">
                 <Avatar className="h-10 w-10">
-                  <AvatarFallback className="bg-blue-500 text-white font-bold">Sa</AvatarFallback>
+                  <AvatarFallback className="bg-gradient-to-br from-purple-400 to-blue-500 text-white font-bold">
+                    {selectedChat.partnerAvatar}
+                  </AvatarFallback>
                 </Avatar>
                 <div>
-                  <h2 className="font-bold text-gray-900">Samsung Electronics</h2>
-                  <p className="text-xs text-green-600 flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
-                    Онлайн
+                  <h2 className="font-bold text-gray-900">{selectedChat.partnerName}</h2>
+                  <p className="text-xs text-gray-500 flex items-center gap-1">
+                     На связи
                   </p>
                 </div>
               </div>
@@ -197,22 +312,18 @@ export default function MessagesPage() {
 
             {/* Messages Area */}
             <div className="flex-1 overflow-y-auto p-6 space-y-4">
-              <div className="text-center text-xs text-gray-400 my-4">
-                <span>Сегодня</span>
-              </div>
-              
               {messages.map((msg) => (
                 <div 
                   key={msg.id} 
                   className={cn(
                     "flex w-full",
-                    msg.senderId === 'me' ? "justify-end" : "justify-start"
+                    msg.sender_id === currentUser?.id ? "justify-end" : "justify-start"
                   )}
                 >
                   <div 
                     className={cn(
                       "max-w-[70%] px-4 py-3 rounded-2xl shadow-sm relative group",
-                      msg.senderId === 'me' 
+                      msg.sender_id === currentUser?.id 
                         ? "bg-purple-600 text-white rounded-br-none" 
                         : "bg-white text-gray-900 rounded-bl-none border border-gray-100"
                     )}
@@ -220,11 +331,11 @@ export default function MessagesPage() {
                     <p className="text-sm leading-relaxed">{msg.content}</p>
                     <div className={cn(
                       "text-[10px] mt-1 flex items-center justify-end gap-1",
-                      msg.senderId === 'me' ? "text-purple-200" : "text-gray-400"
+                      msg.sender_id === currentUser?.id ? "text-purple-200" : "text-gray-400"
                     )}>
-                      {msg.createdAt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                      {msg.senderId === 'me' && (
-                        msg.isRead ? <CheckCheck className="w-3 h-3" /> : <Check className="w-3 h-3" />
+                      {new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                      {msg.sender_id === currentUser?.id && (
+                        msg.is_read ? <CheckCheck className="w-3 h-3" /> : <Check className="w-3 h-3" />
                       )}
                     </div>
                   </div>
