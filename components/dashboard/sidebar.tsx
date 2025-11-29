@@ -23,6 +23,7 @@ import {
   ListTodo
 } from 'lucide-react'
 import { TrustRank } from '@/components/dashboard/trust-rank'
+import { RoleSwitcher } from '@/components/dashboard/role-switcher'
 
 export function DashboardSidebar() {
   const pathname = usePathname()
@@ -167,6 +168,9 @@ export function DashboardSidebar() {
             Общие настройки
           </Link>
         </div>
+        
+        {/* Debug / Admin Tool */}
+        <RoleSwitcher />
       </div>
     </div>
   )
