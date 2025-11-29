@@ -16,8 +16,12 @@ import {
   Upload,
   CheckCircle2,
   AlertCircle,
-  Power
+  Power,
+  Shield,
+  Trophy,
+  Lock
 } from 'lucide-react'
+import { calculateTrustRank, getTrustLevel } from '@/lib/trust-rank'
 
 export default function CreatorProfilePage() {
   const [isLoading, setIsLoading] = useState(false)
@@ -26,17 +30,31 @@ export default function CreatorProfilePage() {
   const [profile, setProfile] = useState({
     nickname: 'CreativeSoul',
     fullName: 'Alex Morgan',
-    bio: 'Создаю уникальный контент про путешествия и технологии. Люблю экспериментировать с форматами.',
+    bio: 'Создаю уникальный контент про путешествия и технологии.',
     email: 'alex@example.com',
     phone: '+1 234 567 8900',
     location: 'Dubai, UAE',
-    status: 'active', // active, busy, vacation
-    avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix'
+    status: 'active',
+    avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix',
+    // Trust Factors
+    hasSocial: true,
+    isKyVerified: false,
+    completedOrders: 3
   })
+
+  // Calculate Trust Rank
+  const { score, breakdown } = calculateTrustRank({
+    hasAvatar: !!profile.avatarUrl,
+    hasBio: profile.bio.length > 10,
+    hasSocial: profile.hasSocial,
+    isKyVerified: profile.isKyVerified,
+    completedOrders: profile.completedOrders
+  })
+
+  const level = getTrustLevel(score)
 
   const handleStatusChange = (newStatus: string) => {
     setProfile({ ...profile, status: newStatus })
-    // Тут будет API call для сохранения
   }
 
   const handleSave = async () => {
@@ -122,14 +140,59 @@ export default function CreatorProfilePage() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Выполнено заказов</span>
-                    <span className="font-bold text-gray-900">142</span>
+                    <span className="font-bold text-gray-900">{profile.completedOrders}</span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between items-center pt-2 border-t border-gray-50">
                     <span className="text-gray-600">Trust Rank</span>
-                    <span className="font-bold text-green-600">85/100</span>
+                    <span className={`font-bold ${level.color}`}>{score}/100</span>
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* Trust Rank Details (New) */}
+            <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+              <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <Shield className="w-5 h-5 text-purple-600" />
+                Уровень доверия
+              </h3>
+              
+              <div className="mb-4 flex items-center gap-3 p-3 rounded-xl bg-gray-50">
+                 <div className={`w-10 h-10 rounded-full flex items-center justify-center ${level.bg}`}>
+                    <Trophy className={`w-5 h-5 ${level.color}`} />
+                 </div>
+                 <div>
+                    <div className="text-xs text-gray-500">Текущий статус</div>
+                    <div className={`font-bold ${level.color}`}>{level.name}</div>
+                 </div>
+                 <div className="ml-auto text-2xl font-bold text-gray-900">{score}</div>
+              </div>
+
+              <div className="space-y-3">
+                {breakdown.map((item) => (
+                  <div key={item.id} className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      {item.achieved ? (
+                        <CheckCircle2 className="w-4 h-4 text-green-500" />
+                      ) : (
+                        <div className="w-4 h-4 rounded-full border-2 border-gray-200" />
+                      )}
+                      <span className={item.achieved ? 'text-gray-700' : 'text-gray-400'}>
+                        {item.label}
+                      </span>
+                    </div>
+                    <div className="text-xs font-medium text-gray-500">
+                      {item.detail ? item.detail : `+${item.currentPoints}`}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              {!profile.isKyVerified && (
+                <Button variant="outline" className="w-full mt-4 text-xs h-8 border-blue-200 text-blue-600 hover:bg-blue-50">
+                  Пройти KYC (+40 баллов)
+                </Button>
+              )}
             </div>
 
             {/* Connected Accounts */}
