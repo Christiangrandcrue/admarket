@@ -15,8 +15,14 @@ import {
   PlayCircle,
   DollarSign,
   Settings,
-  History
+  History,
+  User,
+  FileText,
+  FolderArchive,
+  Upload,
+  ListTodo
 } from 'lucide-react'
+import { TrustRank } from '@/components/dashboard/trust-rank'
 
 export function DashboardSidebar() {
   const pathname = usePathname()
@@ -25,7 +31,7 @@ export function DashboardSidebar() {
   const advertiserLinks = [
     {
       href: '/catalog',
-      label: 'Каталог блогеров',
+      label: 'Каталог креаторов',
       icon: Users,
       external: false
     },
@@ -57,45 +63,57 @@ export function DashboardSidebar() {
       href: '/dashboard/creator/content-factory',
       label: 'Комбайн контента',
       icon: Zap,
-      badge: 'New'
+      badge: 'AI'
     },
     {
-      href: '/dashboard/creator/videos',
-      label: 'Мои видео',
-      icon: History,
-    },
-    {
-      href: '/dashboard/creator/channel',
-      label: 'Мой канал',
-      icon: Video,
+      href: '/dashboard/creator/profile',
+      label: 'Настройки кабинета',
+      icon: User,
     },
     {
       href: '/dashboard/creator/requests',
-      label: 'Входящие заявки',
+      label: 'Заявки',
       icon: Inbox,
     },
     {
-      href: '/dashboard/creator/active',
-      label: 'Активные',
-      icon: PlayCircle,
+      href: '/dashboard/creator/board',
+      label: 'Доска заказов',
+      icon: ListTodo,
+      badge: 'New'
     },
     {
-      href: '/dashboard/creator/earnings',
-      label: 'Заработок',
-      icon: DollarSign,
+      href: '/dashboard/creator/uploader',
+      label: 'Аплоадер',
+      icon: Upload,
+    },
+    {
+      href: '/dashboard/creator/archivist',
+      label: 'Архивариус',
+      icon: FolderArchive,
+    },
+    {
+      href: '/dashboard/creator/wiki',
+      label: 'Вики / Помощь',
+      icon: FileText,
+    },
+    {
+      href: '/messages',
+      label: 'Чаты',
+      icon: MessageSquare,
     },
   ]
 
   const links = isCreator ? creatorLinks : advertiserLinks
 
   return (
-    <div className="hidden border-r border-gray-200 bg-white md:block md:w-64">
+    <div className="hidden border-r border-gray-200 bg-white md:block md:w-64 flex-shrink-0">
       <div className="flex h-full flex-col">
         <div className="flex h-16 items-center border-b border-gray-200 px-6">
           <span className="text-lg font-bold text-gray-900">
-            {isCreator ? 'Кабинет блогера' : 'Кабинет рекламодателя'}
+            {isCreator ? 'Кабинет креатора' : 'Кабинет рекламодателя'}
           </span>
         </div>
+        
         <div className="flex-1 overflow-y-auto py-6">
           <nav className="space-y-1 px-4">
             {links.map((link) => {
@@ -132,13 +150,21 @@ export function DashboardSidebar() {
             })}
           </nav>
         </div>
+
+        {/* Trust Rank Widget (Only for Creator) */}
+        {isCreator && (
+          <div className="px-4 py-4 border-t border-gray-100">
+             <TrustRank score={15} className="mb-2" />
+          </div>
+        )}
+
         <div className="border-t border-gray-200 p-4">
           <Link
             href="/settings"
             className="flex items-center rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900"
           >
             <Settings className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
-            Настройки
+            Общие настройки
           </Link>
         </div>
       </div>

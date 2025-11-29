@@ -91,7 +91,7 @@ export default function CreatorDashboardPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
-                👋 Добро пожаловать, Блогер!
+                👋 Добро пожаловать, Креатор!
               </h1>
               <p className="text-gray-600">
                 Управляйте вашими размещениями и заработком

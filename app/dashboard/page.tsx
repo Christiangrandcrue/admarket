@@ -37,7 +37,7 @@ export default async function DashboardPage() {
         <div className="rounded-2xl border border-gray-100 bg-white p-6">
           <div className="mb-2 text-sm font-medium text-gray-600">Ваша роль</div>
           <div className="text-2xl font-bold text-gray-900">
-            {userRole === 'advertiser' ? '💼 Рекламодатель' : '🎬 Блогер'}
+            {userRole === 'advertiser' ? '💼 Рекламодатель' : '🎬 Креатор'}
           </div>
         </div>
 
