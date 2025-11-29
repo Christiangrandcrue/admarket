@@ -21,7 +21,9 @@ import {
   ChevronRight,
   Loader2,
   Pencil,
-  FolderPlus
+  FolderPlus,
+  Eye,
+  File
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -65,6 +67,7 @@ interface FileItem {
   starred: boolean
   deleted: boolean
   timestamp: number // for sorting
+  url?: string // mock url for preview
 }
 
 interface FolderItem {
@@ -84,16 +87,16 @@ const INITIAL_FOLDERS: FolderItem[] = [
 ]
 
 const INITIAL_FILES: FileItem[] = [
-  { id: '1', name: 'Оферта_AdMarket_2025.pdf', type: 'document', size: '2.4 MB', date: '29.11.2025', folderId: 'contracts', starred: true, deleted: false, timestamp: 1732838400000 },
+  { id: '1', name: 'Оферта_AdMarket_2025.pdf', type: 'document', size: '2.4 MB', date: '29.11.2025', folderId: 'contracts', starred: true, deleted: false, timestamp: 1732838400000, url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf' },
   { id: '2', name: 'Договор_Samsung_Integration.docx', type: 'document', size: '1.1 MB', date: '28.11.2025', folderId: 'contracts', starred: false, deleted: false, timestamp: 1732752000000 },
   { id: '3', name: 'Акт_выполненных_работ_#402.pdf', type: 'document', size: '850 KB', date: '25.11.2025', folderId: 'contracts', starred: false, deleted: false, timestamp: 1732492800000 },
-  { id: '4', name: 'Review_Pixel_8_Draft_v1.mp4', type: 'video', size: '1.2 GB', date: '27.11.2025', folderId: 'media', starred: true, deleted: false, timestamp: 1732665600000 },
-  { id: '5', name: 'Thumbnail_Youtube_Final.jpg', type: 'image', size: '4.5 MB', date: '27.11.2025', folderId: 'media', starred: false, deleted: false, timestamp: 1732665600000 },
+  { id: '4', name: 'Review_Pixel_8_Draft_v1.mp4', type: 'video', size: '1.2 GB', date: '27.11.2025', folderId: 'media', starred: true, deleted: false, timestamp: 1732665600000, url: 'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4' },
+  { id: '5', name: 'Thumbnail_Youtube_Final.jpg', type: 'image', size: '4.5 MB', date: '27.11.2025', folderId: 'media', starred: false, deleted: false, timestamp: 1732665600000, url: 'https://placehold.co/800x450/png' },
   { id: '6', name: 'B-Roll_Unboxing.mov', type: 'video', size: '850 MB', date: '26.11.2025', folderId: 'media', starred: false, deleted: false, timestamp: 1732579200000 },
-  { id: '7', name: 'Voiceover_Intro.wav', type: 'audio', size: '12 MB', date: '26.11.2025', folderId: 'media', starred: false, deleted: false, timestamp: 1732579200000 },
+  { id: '7', name: 'Voiceover_Intro.wav', type: 'audio', size: '12 MB', date: '26.11.2025', folderId: 'media', starred: false, deleted: false, timestamp: 1732579200000, url: 'https://www2.cs.uic.edu/~i101/SoundFiles/StarWars3.wav' },
   { id: '8', name: 'Invoice_#2024-001.pdf', type: 'document', size: '150 KB', date: '20.11.2025', folderId: 'invoices', starred: false, deleted: false, timestamp: 1732060800000 },
   { id: '9', name: 'Invoice_#2024-002.pdf', type: 'document', size: '150 KB', date: '22.11.2025', folderId: 'invoices', starred: false, deleted: false, timestamp: 1732233600000 },
-  { id: '10', name: 'Logo_Vector.svg', type: 'image', size: '50 KB', date: '01.11.2025', folderId: 'assets', starred: true, deleted: false, timestamp: 1730419200000 },
+  { id: '10', name: 'Logo_Vector.svg', type: 'image', size: '50 KB', date: '01.11.2025', folderId: 'assets', starred: true, deleted: false, timestamp: 1730419200000, url: 'https://placehold.co/500x500/png' },
   { id: '11', name: 'Font_Bold.ttf', type: 'document', size: '2 MB', date: '01.11.2025', folderId: 'assets', starred: false, deleted: false, timestamp: 1730419200000 },
 ]
 
@@ -113,6 +116,7 @@ export default function ArchivistPage() {
   const [newFolderName, setNewFolderName] = useState('')
   const [renamingFile, setRenamingFile] = useState<FileItem | null>(null)
   const [newName, setNewName] = useState('')
+  const [previewFile, setPreviewFile] = useState<FileItem | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -183,7 +187,8 @@ export default function ArchivistPage() {
         folderId: activeFolder,
         starred: false,
         deleted: false,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        url: URL.createObjectURL(file) // Create object URL for preview
       }
       setFiles([newFile, ...files])
       setUploading(false)
@@ -482,7 +487,10 @@ export default function ArchivistPage() {
                  {currentFiles.length > 0 ? currentFiles.map(file => (
                    <ContextMenu key={file.id}>
                      <ContextMenuTrigger>
-                       <div className="group bg-white p-4 rounded-xl border border-gray-200 hover:border-purple-300 hover:shadow-md cursor-pointer transition-all relative h-full flex flex-col">
+                       <div 
+                         className="group bg-white p-4 rounded-xl border border-gray-200 hover:border-purple-300 hover:shadow-md cursor-pointer transition-all relative h-full flex flex-col"
+                         onDoubleClick={() => setPreviewFile(file)}
+                       >
                           <div className="flex justify-between items-start mb-3">
                              <div className="p-3 rounded-lg bg-gray-50 group-hover:bg-white transition-colors">
                                 {getIcon(file.type)}
@@ -517,6 +525,9 @@ export default function ArchivistPage() {
                                   </>
                                 ) : (
                                   <>
+                                    <DropdownMenuItem onClick={() => setPreviewFile(file)}>
+                                      <Eye className="w-4 h-4 mr-2" /> Просмотр
+                                    </DropdownMenuItem>
                                     <DropdownMenuItem>Скачать</DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => { setRenamingFile(file); setNewName(file.name) }}>
                                       Переименовать
@@ -549,6 +560,9 @@ export default function ArchivistPage() {
                           </>
                         ) : (
                           <>
+                            <ContextMenuItem onClick={() => setPreviewFile(file)}>
+                              <Eye className="w-4 h-4 mr-2" /> Просмотр
+                            </ContextMenuItem>
                             <ContextMenuItem>
                               <Download className="w-4 h-4 mr-2" /> Скачать
                             </ContextMenuItem>
@@ -591,7 +605,10 @@ export default function ArchivistPage() {
                      {currentFiles.map(file => (
                        <ContextMenu key={file.id}>
                          <ContextMenuTrigger asChild>
-                           <tr className="border-b border-gray-50 hover:bg-purple-50/50 transition-colors group">
+                           <tr 
+                            className="border-b border-gray-50 hover:bg-purple-50/50 transition-colors group cursor-pointer"
+                            onDoubleClick={() => setPreviewFile(file)}
+                           >
                              <td className="px-6 py-3 font-medium text-gray-900 flex items-center gap-3">
                                 {getIcon(file.type)}
                                 {file.name}
@@ -615,6 +632,9 @@ export default function ArchivistPage() {
                                       </>
                                     ) : (
                                       <>
+                                        <DropdownMenuItem onClick={() => setPreviewFile(file)}>
+                                          <Eye className="w-4 h-4 mr-2" /> Просмотр
+                                        </DropdownMenuItem>
                                         <DropdownMenuItem>Скачать</DropdownMenuItem>
                                         <DropdownMenuItem onClick={() => { setRenamingFile(file); setNewName(file.name) }}>Переименовать</DropdownMenuItem>
                                         <DropdownMenuItem onClick={() => toggleStar(file.id)}>{file.starred ? 'Убрать из избранного' : 'В избранное'}</DropdownMenuItem>
@@ -638,6 +658,9 @@ export default function ArchivistPage() {
                               </>
                             ) : (
                               <>
+                                <ContextMenuItem onClick={() => setPreviewFile(file)}>
+                                  <Eye className="w-4 h-4 mr-2" /> Просмотр
+                                </ContextMenuItem>
                                 <ContextMenuItem>Скачать</ContextMenuItem>
                                 <ContextMenuItem onClick={() => { setRenamingFile(file); setNewName(file.name) }}>Переименовать</ContextMenuItem>
                                 <ContextMenuItem onClick={() => toggleStar(file.id)}>
@@ -672,6 +695,57 @@ export default function ArchivistPage() {
           <DialogFooter>
             <Button onClick={handleRename}>Сохранить</Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Preview Dialog */}
+      <Dialog open={!!previewFile} onOpenChange={(open) => !open && setPreviewFile(null)}>
+        <DialogContent className="max-w-4xl w-full p-0 overflow-hidden bg-black/95 border-none">
+          <div className="relative w-full h-[80vh] flex flex-col items-center justify-center">
+             <DialogHeader className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/80 to-transparent z-10">
+               <div className="flex items-center justify-between text-white">
+                 <DialogTitle className="text-lg font-medium truncate pr-8">
+                   {previewFile?.name}
+                 </DialogTitle>
+               </div>
+             </DialogHeader>
+             
+             <div className="w-full h-full flex items-center justify-center overflow-hidden">
+               {previewFile?.type === 'image' && previewFile.url ? (
+                 <img 
+                   src={previewFile.url} 
+                   alt={previewFile.name} 
+                   className="max-w-full max-h-full object-contain"
+                 />
+               ) : previewFile?.type === 'video' && previewFile.url ? (
+                 <video 
+                   src={previewFile.url} 
+                   controls 
+                   className="max-w-full max-h-full"
+                   autoPlay
+                 />
+               ) : previewFile?.type === 'audio' && previewFile.url ? (
+                 <div className="w-full max-w-md p-8 bg-white/10 rounded-xl backdrop-blur-md">
+                    <div className="flex flex-col items-center gap-4">
+                      <Music className="w-24 h-24 text-white opacity-80" />
+                      <audio 
+                        src={previewFile.url} 
+                        controls 
+                        className="w-full" 
+                      />
+                    </div>
+                 </div>
+               ) : (
+                 <div className="text-center text-white">
+                    <FileText className="w-24 h-24 mx-auto mb-4 opacity-50" />
+                    <p className="text-lg mb-4">Предпросмотр недоступен</p>
+                    <Button variant="secondary" onClick={() => window.open(previewFile?.url, '_blank')}>
+                      <Download className="w-4 h-4 mr-2" /> Скачать файл
+                    </Button>
+                 </div>
+               )}
+             </div>
+          </div>
         </DialogContent>
       </Dialog>
 
