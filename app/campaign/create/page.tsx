@@ -15,6 +15,7 @@ import { ArrowLeft, ArrowRight, Save } from 'lucide-react'
 import Link from 'next/link'
 
 const initialDraft: CampaignDraft = {
+  title: '',
   goal: 'conversions',
   kpis: {},
   description: '',
@@ -120,7 +121,7 @@ function CreateCampaignContent() {
   const canProceed = () => {
     switch (currentStep) {
       case 1:
-        return draft.description.length > 0
+        return draft.title.length > 0 && draft.description.length > 0
       case 2:
         return draft.selectedChannels.length > 0
       case 3:

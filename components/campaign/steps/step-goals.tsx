@@ -35,6 +35,25 @@ export function StepGoals({ draft, updateDraft }: StepGoalsProps) {
         </p>
       </div>
 
+      {/* Title */}
+      <div>
+        <label
+          htmlFor="title"
+          className="mb-2 block text-sm font-semibold text-gray-900"
+        >
+          Название кампании
+          <span className="ml-1 text-red-600">*</span>
+        </label>
+        <Input
+          id="title"
+          value={draft.title}
+          onChange={(e) => updateDraft({ title: e.target.value })}
+          placeholder="Например: Реклама летней коллекции 2025"
+          className="w-full"
+          required
+        />
+      </div>
+
       {/* Goal Selection */}
       <div>
         <label className="mb-4 block text-sm font-semibold text-gray-900">

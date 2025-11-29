@@ -1,36 +1,33 @@
 import { NextResponse } from 'next/server'
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+import { createClient } from '@/lib/supabase/server'
 
 // GET /api/campaigns - List campaigns for advertiser
 export async function GET(request: Request) {
   try {
-    const { searchParams } = new URL(request.url)
-    const advertiserId = searchParams.get('advertiser_id')
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    let url = `${supabaseUrl}/rest/v1/campaigns?select=*&order=created_at.desc`
-    
-    if (advertiserId) {
-      url += `&advertiser_id=eq.${advertiserId}`
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
     }
 
-    const response = await fetch(url, {
-      headers: {
-        apikey: supabaseKey,
-        Authorization: `Bearer ${supabaseKey}`,
-      },
-    })
+    // Fetch campaigns for this advertiser
+    const { data: campaigns, error } = await supabase
+      .from('campaigns')
+      .select('*')
+      .eq('advertiser_id', user.id)
+      .order('created_at', { ascending: false })
 
-    if (!response.ok) {
-      throw new Error('Failed to fetch campaigns')
+    if (error) {
+      throw error
     }
-
-    const campaigns = await response.json()
 
     return NextResponse.json({
       success: true,
-      campaigns,
+      campaigns: campaigns || [],
     })
   } catch (error: any) {
     console.error('Error fetching campaigns:', error)
@@ -44,48 +41,57 @@ export async function GET(request: Request) {
 // POST /api/campaigns - Create new campaign
 export async function POST(request: Request) {
   try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
     const body = await request.json()
 
-    // For now, use a hardcoded advertiser ID (same as channel owner)
-    // In production, this would come from authenticated session
-    const advertiserId = 'bf91c23b-7b52-4870-82f7-ba9ad852b49e'
+    // Map CampaignDraft to Database Schema
+    // Draft fields: title, goal, description, selectedChannels, totalBudget, paymentModel, startDate, endDate, contentRequirements
+    
+    // Simple mapping logic
+    const platform = body.selectedChannels?.length > 0 
+      ? 'mixed' 
+      : 'instagram' // default
 
-    const campaign = {
-      advertiser_id: advertiserId,
-      name: body.name,
-      goal: body.goal,
-      description: body.description || null,
-      geo: body.geo,
-      audience: body.audience,
-      budget: body.budget,
-      model: body.model,
-      utm: body.utm,
-      promo_codes: body.promo_codes || [],
-      status: 'draft',
-      integrations: body.integrations,
+    const requirements = [
+      body.briefDescription,
+      ...(body.contentRequirements || []),
+      ...(body.restrictions || [])
+    ].filter(Boolean).join('\n\n')
+
+    const campaignData = {
+      advertiser_id: user.id,
+      title: body.title,
+      description: body.description,
+      platform: platform,
+      category: 'General', // Default as it's not in the wizard yet
+      budget: body.totalBudget || 0,
+      requirements: requirements,
+      deadline: body.endDate ? new Date(body.endDate).toISOString() : null,
+      status: 'active', // Default to active for immediate visibility
     }
 
-    const response = await fetch(`${supabaseUrl}/rest/v1/campaigns`, {
-      method: 'POST',
-      headers: {
-        apikey: supabaseKey,
-        Authorization: `Bearer ${supabaseKey}`,
-        'Content-Type': 'application/json',
-        Prefer: 'return=representation',
-      },
-      body: JSON.stringify(campaign),
-    })
+    const { data: campaign, error } = await supabase
+      .from('campaigns')
+      .insert(campaignData)
+      .select()
+      .single()
 
-    if (!response.ok) {
-      const error = await response.text()
-      throw new Error(error || 'Failed to create campaign')
+    if (error) {
+      throw error
     }
-
-    const [createdCampaign] = await response.json()
 
     return NextResponse.json({
       success: true,
-      campaign: createdCampaign,
+      campaign: campaign,
     })
   } catch (error: any) {
     console.error('Error creating campaign:', error)

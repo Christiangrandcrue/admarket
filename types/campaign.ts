@@ -26,6 +26,7 @@ export interface SelectedChannel {
 
 export interface CampaignDraft {
   // Step 1: Goals & KPI
+  title: string
   goal: CampaignGoal
   kpis: CampaignKPI
   description: string

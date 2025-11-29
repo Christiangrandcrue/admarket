@@ -16,12 +16,12 @@ interface Campaign {
   id: string
   title: string
   description: string
-  goal: string
+  category: string
   status: string
-  total_budget: number
-  start_date: string
-  end_date: string
-  selected_channels: any[]
+  budget: number
+  created_at: string
+  deadline: string
+  platform: string
 }
 
 export default function CampaignsPage() {
@@ -134,7 +134,7 @@ export default function CampaignsPage() {
                   <div className="mb-4 flex items-start justify-between">
                     <div>
                       <p className="text-xs text-gray-500">
-                        {getGoalLabel(campaign.goal)}
+                        {campaign.category}
                       </p>
                     </div>
                     {getStatusBadge(campaign.status)}
@@ -155,19 +155,19 @@ export default function CampaignsPage() {
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-600">Бюджет:</span>
                       <span className="font-semibold text-gray-900">
-                        {formatBudget(campaign.total_budget)}
+                        {formatBudget(campaign.budget)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Каналов:</span>
+                      <span className="text-gray-600">Платформа:</span>
                       <span className="font-semibold text-gray-900">
-                        {campaign.selected_channels?.length || 0}
+                        {campaign.platform}
                       </span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Период:</span>
+                      <span className="text-gray-600">Дедлайн:</span>
                       <span className="font-medium text-gray-900">
-                        {formatDate(campaign.start_date)} — {formatDate(campaign.end_date)}
+                        {formatDate(campaign.deadline)}
                       </span>
                     </div>
                   </div>
@@ -213,7 +213,7 @@ export default function CampaignsPage() {
                   <p className="text-sm text-gray-600">Общий бюджет</p>
                 </div>
                 <p className="text-2xl font-bold text-gray-900">
-                  {formatBudget(campaigns.reduce((sum, c) => sum + c.total_budget, 0))}
+                  {formatBudget(campaigns.reduce((sum, c) => sum + c.budget, 0))}
                 </p>
               </div>
             </div>
