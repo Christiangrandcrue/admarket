@@ -27,90 +27,95 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // IMPORTANT: Avoid writing any logic between createServerClient and
-  // supabase.auth.getUser(). A simple mistake could make it very hard to debug
-  // issues with users being randomly logged out.
-
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Protect admin routes
-  if (request.nextUrl.pathname.startsWith('/dashboard/admin')) {
-    if (!user) {
-      const url = request.nextUrl.clone()
-      url.pathname = '/auth/login'
-      url.searchParams.set('redirectTo', request.nextUrl.pathname)
-      return NextResponse.redirect(url)
-    }
+  // 1. Public Routes (Always allowed)
+  const isPublic = 
+    request.nextUrl.pathname === '/' ||
+    request.nextUrl.pathname.startsWith('/auth') ||
+    request.nextUrl.pathname.startsWith('/api/auth') ||
+    request.nextUrl.pathname.startsWith('/_next') ||
+    request.nextUrl.pathname.includes('favicon.ico')
 
-    // Check if user is admin
-    const { data: userData } = await supabase
-      .from('users')
-      .select('role, status')
-      .eq('id', user.id)
-      .single()
-
-    if (userData?.role !== 'admin') {
-      const url = request.nextUrl.clone()
-      url.pathname = '/dashboard'
-      return NextResponse.redirect(url)
-    }
-
-    if (userData?.status !== 'active') {
-      const url = request.nextUrl.clone()
-      url.pathname = '/auth/login'
-      url.searchParams.set('error', 'Account suspended')
-      return NextResponse.redirect(url)
-    }
+  if (isPublic) {
+    return supabaseResponse
   }
 
-  // Protect dashboard routes
-  if (request.nextUrl.pathname.startsWith('/dashboard')) {
-    if (!user) {
-      const url = request.nextUrl.clone()
-      url.pathname = '/auth/login'
-      url.searchParams.set('redirectTo', request.nextUrl.pathname)
-      return NextResponse.redirect(url)
-    }
+  // 2. Protected Routes (Require Login)
+  if (!user) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/auth/login'
+    url.searchParams.set('redirectTo', request.nextUrl.pathname)
+    return NextResponse.redirect(url)
   }
 
-  // Protect campaign creation
-  if (request.nextUrl.pathname.startsWith('/campaign/create')) {
-    if (!user) {
-      const url = request.nextUrl.clone()
-      url.pathname = '/auth/login'
-      url.searchParams.set('redirectTo', request.nextUrl.pathname)
-      return NextResponse.redirect(url)
-    }
+  // 3. Role & Status Check (The "Wall")
+  // We query the profiles table to check status
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role, status')
+    .eq('id', user.id)
+    .single()
+
+  // Current path
+  const path = request.nextUrl.pathname
+
+  // If no profile exists yet (rare edge case after registration trigger), let them proceed to role selection
+  // or force them there if they are trying to access dashboard
+  if (!profile) {
+    // Allow access to role selection page
+    if (path === '/onboarding/role-selection') return supabaseResponse
+    // Redirect everything else to role selection
+    return NextResponse.redirect(new URL('/onboarding/role-selection', request.url))
   }
 
-  // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're
-  // creating a new response object with NextResponse.next() make sure to:
-  // 1. Pass the request in it, like so:
-  //    const myNewResponse = NextResponse.next({ request })
-  // 2. Copy over the cookies, like so:
-  //    myNewResponse.cookies.setAll(supabaseResponse.cookies.getAll())
-  // 3. Change the myNewResponse object to fit your needs, but avoid changing
-  //    the cookies!
-  // 4. Finally:
-  //    return myNewResponse
-  // If this is not done, you may be causing the browser and server to go out
-  // of sync and terminate the user's session prematurely!
+  // STATUS CHECKS
+  // A. If status is 'new' or role is null -> Force Role Selection
+  if (profile.status === 'new' || !profile.role) {
+    if (path !== '/onboarding/role-selection') {
+        return NextResponse.redirect(new URL('/onboarding/role-selection', request.url))
+    }
+    return supabaseResponse
+  }
+
+  // B. If status is 'pending' -> Force Verification Page (Block Dashboards)
+  if (profile.status === 'pending') {
+    if (path !== '/onboarding/verification') {
+        return NextResponse.redirect(new URL('/onboarding/verification', request.url))
+    }
+    return supabaseResponse
+  }
+
+  // C. If status is 'rejected' -> Show rejection (or just reuse verification page with error param)
+  if (profile.status === 'rejected') {
+     // For now, redirect to verification but maybe show a toast there
+     if (path !== '/onboarding/verification') {
+        return NextResponse.redirect(new URL('/onboarding/verification', request.url))
+    }
+    return supabaseResponse
+  }
+
+  // D. Approved Users -> Role Based Access Control (RBAC)
+  if (profile.status === 'approved' || profile.status === 'active') { // 'active' is legacy status
+    
+    // Prevent Approved Advertiser from accessing Creator Dashboard
+    if (profile.role === 'advertiser' && path.startsWith('/dashboard/creator')) {
+        return NextResponse.redirect(new URL('/dashboard/campaigns', request.url))
+    }
+
+    // Prevent Approved Creator from accessing Advertiser Dashboard
+    if (profile.role === 'creator' && path.startsWith('/dashboard/campaigns')) {
+        return NextResponse.redirect(new URL('/dashboard/creator', request.url))
+    }
+  }
 
   return supabaseResponse
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - test-video-generator (public test page)
-     * Feel free to modify this pattern to include more paths.
-     */
-    '/((?!_next/static|_next/image|favicon.ico|test-video-generator|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
