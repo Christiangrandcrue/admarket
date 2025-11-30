@@ -50,13 +50,15 @@ export default function RegisterPage() {
 
       // Create user profile in database
       if (data.user) {
+        // Use 'profiles' table consistent with middleware and other parts of the app
         const { error: profileError } = await supabase
-          .from('users')
+          .from('profiles')
           .insert({
             id: data.user.id,
             email: formData.email,
             full_name: formData.fullName,
             role: role,
+            status: 'active' // Auto-activate for MVP
           })
 
         if (profileError && profileError.code !== '23505') { // Ignore duplicate key error

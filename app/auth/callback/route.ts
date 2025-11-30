@@ -15,12 +15,14 @@ export async function GET(request: NextRequest) {
       const { data: { user } } = await supabase.auth.getUser()
       
       if (user) {
-        // Create user profile with role
-        await supabase.from('users').upsert({
+        // Create user profile with role in 'profiles' table
+        await supabase.from('profiles').upsert({
           id: user.id,
           email: user.email,
           full_name: user.user_metadata.full_name || user.email?.split('@')[0],
           role: role as 'advertiser' | 'creator',
+          status: 'active', // Auto-activate
+          updated_at: new Date().toISOString(),
         }, {
           onConflict: 'id'
         })

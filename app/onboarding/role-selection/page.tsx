@@ -13,6 +13,17 @@ export default function RoleSelectionPage() {
   const router = useRouter()
   const supabase = createClient()
 
+  // Auto-redirect if role is already present
+  if (typeof window !== 'undefined') {
+     const storedRole = localStorage.getItem('dashboard_role_override')
+     if (storedRole) {
+        // Optional: Auto-redirect if we trust localStorage? 
+        // For now let's just keep it manual to allow switching, 
+        // but we could uncomment next line to skip this page entirely
+        // window.location.href = storedRole === 'creator' ? '/dashboard/creator' : '/dashboard/campaigns'
+     }
+  }
+
   const selectRole = async (role: 'advertiser' | 'creator') => {
     if (loading) return // Prevent double clicks
 
