@@ -160,7 +160,7 @@ export default function HomePage() {
 
               <div className="mt-10">
                  <Button asChild>
-                   <Link href="/auth/register?role=advertiser">Начать сейчас</Link>
+                   <Link href="/dashboard/campaigns">Начать сейчас</Link>
                  </Button>
               </div>
             </div>
