@@ -26,7 +26,7 @@ export default function ContentFactoryHub() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           
           {/* Tool 1: Single Video */}
-          <Link href="/dashboard/creator" className="group">
+          <Link href="/dashboard/creator/content-factory/video" className="group">
             <div className="bg-white rounded-2xl p-6 h-full border border-gray-100 shadow-sm hover:shadow-xl hover:border-purple-200 transition-all relative overflow-hidden">
               <div className="absolute top-0 right-0 bg-purple-50 w-24 h-24 rounded-bl-[100px] -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
               <div className="relative z-10">
