@@ -26,7 +26,7 @@ import {
 import { TrustRank } from '@/components/dashboard/trust-rank'
 import { RoleSwitcher } from '@/components/dashboard/role-switcher'
 
-export function DashboardSidebar() {
+export function DashboardSidebar({ className, mobile = false }: { className?: string, mobile?: boolean }) {
   const pathname = usePathname()
   // Default to pathname detection, but allow override via local storage for testing
   const [roleOverride, setRoleOverride] = useState<string | null>(null)
@@ -143,13 +143,19 @@ export function DashboardSidebar() {
   const links = isCreator ? creatorLinks : advertiserLinks
 
   return (
-    <div className="hidden border-r border-gray-200 bg-white md:block md:w-64 flex-shrink-0">
+    <div className={cn(
+        "flex h-full flex-col bg-white border-r border-gray-200",
+        mobile ? "w-full border-none" : "hidden md:block md:w-64 flex-shrink-0",
+        className
+    )}>
       <div className="flex h-full flex-col">
-        <div className="flex h-16 items-center border-b border-gray-200 px-6">
-          <span className="text-lg font-bold text-gray-900">
-            {isCreator ? 'Кабинет креатора' : 'Кабинет рекламодателя'}
-          </span>
-        </div>
+        {!mobile && (
+            <div className="flex h-16 items-center border-b border-gray-200 px-6">
+            <span className="text-lg font-bold text-gray-900">
+                {isCreator ? 'Кабинет креатора' : 'Кабинет рекламодателя'}
+            </span>
+            </div>
+        )}
         
         <div className="flex-1 overflow-y-auto py-6">
           <nav className="space-y-1 px-4">
