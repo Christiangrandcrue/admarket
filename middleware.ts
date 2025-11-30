@@ -59,77 +59,9 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // 3. Role & Status Check (The "Wall")
-  // We query the profiles table to check status
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role, status')
-    .eq('id', user.id)
-    .single()
-
-  // Current path
-  const path = request.nextUrl.pathname
-
-  // Helper to handle API redirects by returning JSON instead
-  const handleRedirect = (url: URL) => {
-    if (path.startsWith('/api/')) {
-        return NextResponse.json(
-            { error: 'Forbidden', message: 'Access denied due to profile status' },
-            { status: 403 }
-        )
-    }
-    return NextResponse.redirect(url)
-  }
-
-  // If no profile exists yet (rare edge case after registration trigger), let them proceed to role selection
-  // or force them there if they are trying to access dashboard
-  if (!profile) {
-    // Allow access to role selection page
-    if (path === '/onboarding/role-selection') return supabaseResponse
-    // Redirect everything else to role selection
-    return handleRedirect(new URL('/onboarding/role-selection', request.url))
-  }
-
-  // STATUS CHECKS
-  // A. If status is 'new' or role is null -> Force Role Selection
-  if (profile.status === 'new' || !profile.role) {
-    if (path !== '/onboarding/role-selection') {
-        return handleRedirect(new URL('/onboarding/role-selection', request.url))
-    }
-    return supabaseResponse
-  }
-
-  // B. If status is 'pending' -> Force Verification Page (Block Dashboards)
-  if (profile.status === 'pending') {
-    if (path !== '/onboarding/verification') {
-        return handleRedirect(new URL('/onboarding/verification', request.url))
-    }
-    return supabaseResponse
-  }
-
-  // C. If status is 'rejected' -> Show rejection (or just reuse verification page with error param)
-  if (profile.status === 'rejected') {
-     // For now, redirect to verification but maybe show a toast there
-     if (path !== '/onboarding/verification') {
-        return handleRedirect(new URL('/onboarding/verification', request.url))
-    }
-    return supabaseResponse
-  }
-
-  // D. Approved Users -> Role Based Access Control (RBAC)
-  if (profile.status === 'approved' || profile.status === 'active') { // 'active' is legacy status
-    
-    // Prevent Approved Advertiser from accessing Creator Dashboard
-    if (profile.role === 'advertiser' && path.startsWith('/dashboard/creator')) {
-        return handleRedirect(new URL('/dashboard/campaigns', request.url))
-    }
-
-    // Prevent Approved Creator from accessing Advertiser Dashboard
-    if (profile.role === 'creator' && path.startsWith('/dashboard/campaigns')) {
-        return handleRedirect(new URL('/dashboard/creator', request.url))
-    }
-  }
-
+  // 3. EMERGENCY MODE: DISABLE ALL ROLE/STATUS CHECKS
+  // This allows the user to access ANY dashboard page as long as they are logged in.
+  // Client-side components will handle missing data gracefully instead of infinite redirects.
   return supabaseResponse
 }
 
