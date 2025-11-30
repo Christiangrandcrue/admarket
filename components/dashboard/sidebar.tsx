@@ -78,6 +78,11 @@ export function DashboardSidebar() {
       icon: MessageSquare,
       external: false
     },
+    {
+      href: '/dashboard/wallet',
+      label: 'Финансы',
+      icon: DollarSign,
+    },
   ]
 
   const creatorLinks = [
@@ -122,6 +127,11 @@ export function DashboardSidebar() {
       href: '/dashboard/creator/wiki',
       label: 'Вики / Помощь',
       icon: FileText,
+    },
+    {
+      href: '/dashboard/wallet',
+      label: 'Кошелек',
+      icon: DollarSign,
     },
     {
       href: '/messages',
