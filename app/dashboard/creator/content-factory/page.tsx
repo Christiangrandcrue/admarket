@@ -82,6 +82,25 @@ export default function ContentFactoryHub() {
             </div>
           </Link>
 
+          {/* Tool 4: AI Translator (Lip Sync) */}
+          <Link href="/dashboard/creator/content-factory/translator" className="group">
+            <div className="bg-white rounded-2xl p-6 h-full border border-gray-100 shadow-sm hover:shadow-xl hover:border-indigo-200 transition-all relative overflow-hidden">
+              <div className="absolute top-0 right-0 bg-indigo-50 w-24 h-24 rounded-bl-[100px] -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+              <div className="relative z-10">
+                <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-600 mb-4 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                  <Sparkles className="w-6 h-6" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">AI Переводчик</h3>
+                <p className="text-gray-500 text-sm mb-4">
+                  Перевод видео на любой язык с сохранением мимики губ (Lip Sync).
+                </p>
+                <div className="flex items-center text-indigo-600 font-medium text-sm group-hover:translate-x-2 transition-transform">
+                  Перевести <ArrowRight className="w-4 h-4 ml-1" />
+                </div>
+              </div>
+            </div>
+          </Link>
+
         </div>
 
         {/* Recent Activity / Stats Preview */}
