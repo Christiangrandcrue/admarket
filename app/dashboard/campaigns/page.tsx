@@ -94,7 +94,7 @@ export default function CampaignsPage() {
             <h1 className="text-3xl font-bold text-gray-900">Мои кампании</h1>
             <p className="text-gray-600">Управляйте вашими рекламными кампаниями</p>
           </div>
-          <Link href="/campaign/create">
+          <Link href="/campaigns/create">
             <Button className="gap-2">
               <Plus className="h-4 w-4" />
               Создать кампанию
@@ -114,7 +114,7 @@ export default function CampaignsPage() {
             <p className="mb-6 text-gray-600">
               Создайте первую кампанию, чтобы начать работу с блогерами
             </p>
-            <Link href="/campaign/create">
+            <Link href="/campaigns/create">
               <Button className="gap-2">
                 <Plus className="h-4 w-4" />
                 Создать первую кампанию
