@@ -20,23 +20,20 @@ export default function RoleSelectionPage() {
       
       if (!user) return
 
-      // Update profile in DB
-      const { error } = await supabase
-        .from('profiles')
-        .update({ 
+      // Update user metadata in Supabase Auth
+      const { error } = await supabase.auth.updateUser({
+        data: { 
             role: role,
-            status: 'pending' // Immediately send to pending/verification logic
-        })
-        .eq('id', user.id)
+            status: 'active' // Auto-activate for MVP
+        }
+      })
 
       if (error) throw error
 
       toast.success('Роль выбрана!')
       
-      // Redirect based on role logic
-      // For MVP, we might skip verification step if we want to test fast,
-      // but user requested HARD verify. So we go to verification page or onboarding form.
-      router.push('/onboarding/verification')
+      // Force refresh to ensure middleware/layout picks up the new role
+      window.location.href = role === 'creator' ? '/dashboard/creator' : '/dashboard/campaigns'
 
     } catch (error) {
       console.error(error)
