@@ -44,13 +44,13 @@ export default function HomePage() {
           
           <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Button size="lg" className="h-12 px-8 text-base bg-gray-900 hover:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-300" asChild>
-              <Link href="/catalog">
-                Найти блогера <ArrowRight className="ml-2 h-5 w-5" />
+              <Link href="/dashboard/campaigns">
+                Кабинет Рекламодателя <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             </Button>
             <Button size="lg" variant="outline" className="h-12 px-8 text-base border-gray-300 hover:bg-gray-50 hover:text-gray-900" asChild>
-              <Link href="/auth/register?role=creator">
-                Я Креатор
+              <Link href="/dashboard/creator">
+                Кабинет Креатора
               </Link>
             </Button>
           </div>
