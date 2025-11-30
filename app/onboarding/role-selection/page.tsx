@@ -36,19 +36,36 @@ export default function RoleSelectionPage() {
 
       if (authError) throw authError
 
-      // CRITICAL: Also update 'profiles' table explicitly because middleware checks it
-      // and triggers might be slow or missing
+      // CRITICAL: Use UPSERT to handle both existing and missing rows
+      // This ensures the profile exists and has the correct status
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({ 
+        .upsert({ 
+            id: user.id,
             role: role, 
-            status: 'active' 
+            status: 'active',
+            updated_at: new Date().toISOString()
         })
-        .eq('id', user.id)
+        .select()
 
       if (profileError) {
         console.error('Profile update error:', profileError)
-        // Continue anyway if auth update succeeded, but warn
+        toast.error(`Ошибка обновления профиля: ${profileError.message}`)
+        setLoading(null)
+        return
+      }
+
+      // Double check: Read it back to confirm
+      const { data: checkProfile } = await supabase
+        .from('profiles')
+        .select('role, status')
+        .eq('id', user.id)
+        .single()
+      
+      if (!checkProfile || checkProfile.role !== role) {
+         toast.error('Не удалось подтвердить сохранение роли. Попробуйте еще раз.')
+         setLoading(null)
+         return
       }
 
       toast.success('Роль выбрана! Переходим в кабинет...')
@@ -56,11 +73,9 @@ export default function RoleSelectionPage() {
       // Save to localStorage for sidebar consistency
       localStorage.setItem('dashboard_role_override', role)
       
-      // Redirect based on role
+      // Force hard reload to clear any stale middleware caches
       const targetUrl = role === 'creator' ? '/dashboard/creator' : '/dashboard/campaigns'
-      
-      // Use router.replace for cleaner history
-      router.replace(targetUrl)
+      window.location.href = targetUrl // Use standard navigation instead of router for hard switch
 
     } catch (error) {
       console.error(error)
