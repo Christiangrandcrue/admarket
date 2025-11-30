@@ -18,7 +18,11 @@ export default function RoleSelectionPage() {
       setLoading(true)
       const { data: { user } } = await supabase.auth.getUser()
       
-      if (!user) return
+      if (!user) {
+        toast.error('Пользователь не найден. Пожалуйста, войдите снова.')
+        router.push('/auth/login')
+        return
+      }
 
       // Update user metadata in Supabase Auth
       const { error } = await supabase.auth.updateUser({

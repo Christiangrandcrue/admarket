@@ -4,6 +4,7 @@ import './globals.css'
 import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
 import { AuthProvider } from '@/lib/auth/auth-context'
+import { Toaster } from 'sonner'
 
 const inter = Inter({ subsets: ['latin', 'cyrillic'] })
 
@@ -27,6 +28,7 @@ export default function RootLayout({
             <main className="flex-1">{children}</main>
             <Footer />
           </div>
+          <Toaster />
         </AuthProvider>
       </body>
     </html>
