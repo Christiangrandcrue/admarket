@@ -5,17 +5,19 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { User, Megaphone, CheckCircle2 } from 'lucide-react'
+import { User, Megaphone, CheckCircle2, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function RoleSelectionPage() {
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState<string | null>(null) // 'advertiser' | 'creator' | null
   const router = useRouter()
   const supabase = createClient()
 
   const selectRole = async (role: 'advertiser' | 'creator') => {
+    if (loading) return // Prevent double clicks
+
     try {
-      setLoading(true)
+      setLoading(role)
       const { data: { user } } = await supabase.auth.getUser()
       
       if (!user) {
@@ -34,16 +36,21 @@ export default function RoleSelectionPage() {
 
       if (error) throw error
 
-      toast.success('Роль выбрана!')
+      toast.success('Роль выбрана! Переходим в кабинет...')
       
-      // Force refresh to ensure middleware/layout picks up the new role
-      window.location.href = role === 'creator' ? '/dashboard/creator' : '/dashboard/campaigns'
+      // Save to localStorage for sidebar consistency
+      localStorage.setItem('dashboard_role_override', role)
+      
+      // Redirect based on role
+      const targetUrl = role === 'creator' ? '/dashboard/creator' : '/dashboard/campaigns'
+      
+      // Use router.replace for cleaner history
+      router.replace(targetUrl)
 
     } catch (error) {
       console.error(error)
       toast.error('Ошибка сохранения роли')
-    } finally {
-      setLoading(false)
+      setLoading(null)
     }
   }
 
@@ -52,7 +59,15 @@ export default function RoleSelectionPage() {
       <div className="max-w-4xl w-full grid gap-8 md:grid-cols-2">
         
         {/* Advertiser Card */}
-        <Card className="cursor-pointer hover:border-purple-500 transition-all hover:shadow-lg" onClick={() => selectRole('advertiser')}>
+        <Card 
+          className={`cursor-pointer transition-all hover:shadow-lg relative overflow-hidden ${loading ? 'opacity-50 pointer-events-none' : 'hover:border-purple-500'}`}
+          onClick={() => selectRole('advertiser')}
+        >
+          {loading === 'advertiser' && (
+            <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-10">
+              <Loader2 className="w-8 h-8 text-purple-600 animate-spin" />
+            </div>
+          )}
           <CardHeader>
             <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4 text-purple-600">
                 <Megaphone className="w-6 h-6" />
@@ -70,7 +85,15 @@ export default function RoleSelectionPage() {
         </Card>
 
         {/* Creator Card */}
-        <Card className="cursor-pointer hover:border-blue-500 transition-all hover:shadow-lg" onClick={() => selectRole('creator')}>
+        <Card 
+          className={`cursor-pointer transition-all hover:shadow-lg relative overflow-hidden ${loading ? 'opacity-50 pointer-events-none' : 'hover:border-blue-500'}`}
+          onClick={() => selectRole('creator')}
+        >
+          {loading === 'creator' && (
+            <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-10">
+              <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+            </div>
+          )}
           <CardHeader>
             <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4 text-blue-600">
                 <User className="w-6 h-6" />
