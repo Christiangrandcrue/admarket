@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import {
   TrendingUp,
   DollarSign,
@@ -84,12 +85,11 @@ interface Analytics {
 }
 
 export default function AnalyticsPage() {
-  const currentUserId = 'bf91c23b-7b52-4870-82f7-ba9ad852b49e'
-  const currentUserType = 'advertiser' // TODO: Get from auth context
-
+  const [currentUserType, setCurrentUserType] = useState<'advertiser' | 'creator'>('advertiser')
   const [analytics, setAnalytics] = useState<Analytics | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const supabase = createClient()
 
   useEffect(() => {
     loadAnalytics()
@@ -100,101 +100,127 @@ export default function AnalyticsPage() {
       setLoading(true)
       setError(null)
 
-      // TODO: Load from API when ready
-      // For now, use mock data
-      const mockAnalytics: Analytics = {
-        campaigns: {
-          total: 12,
-          active: 5,
-          paused: 2,
-          completed: 4,
-          draft: 1,
-        },
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Пользователь не авторизован')
+
+      // 1. Get Profile Role
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+      
+      const role = profile?.role || 'advertiser'
+      setCurrentUserType(role)
+
+      // 2. Fetch Data based on Role
+      let campaignsStats = { total: 0, active: 0, paused: 0, completed: 0, draft: 0, totalBudget: 0 }
+      let placementsStats = { total: 0, proposal: 0, booked: 0, in_progress: 0, posted: 0, approved: 0, rejected: 0, totalSpent: 0, totalEarned: 0 }
+      
+      if (role === 'advertiser') {
+        // Fetch Campaigns
+        const { data: campaigns } = await supabase
+            .from('campaigns')
+            .select('id, status, budget')
+            .eq('advertiser_id', user.id)
+        
+        if (campaigns) {
+            campaignsStats.total = campaigns.length
+            campaignsStats.active = campaigns.filter(c => c.status === 'active').length
+            campaignsStats.completed = campaigns.filter(c => c.status === 'closed').length // map closed to completed
+            campaignsStats.totalBudget = campaigns.reduce((sum, c) => sum + (c.budget || 0), 0)
+        }
+
+        // Fetch Applications (as Placements) for my campaigns
+        // We need to join, but Supabase JS client doesn't do deep joins easily on counts.
+        // Let's fetch applications where campaign_id is in my campaigns list
+        if (campaigns && campaigns.length > 0) {
+            const campaignIds = campaigns.map(c => c.id)
+            const { data: applications } = await supabase
+                .from('applications')
+                .select('status, bid_amount')
+                .in('campaign_id', campaignIds)
+            
+            if (applications) {
+                placementsStats.total = applications.length
+                placementsStats.proposal = applications.filter(a => a.status === 'pending').length
+                placementsStats.approved = applications.filter(a => a.status === 'accepted').length
+                placementsStats.rejected = applications.filter(a => a.status === 'rejected').length
+                // Assuming 'accepted' means spent for now
+                placementsStats.totalSpent = applications
+                    .filter(a => a.status === 'accepted')
+                    .reduce((sum, a) => sum + (a.bid_amount || 0), 0)
+            }
+        }
+
+      } else {
+        // CREATOR Logic
+        const { data: applications } = await supabase
+            .from('applications')
+            .select('status, bid_amount')
+            .eq('creator_id', user.id)
+        
+        if (applications) {
+            placementsStats.total = applications.length
+            placementsStats.proposal = applications.filter(a => a.status === 'pending').length
+            placementsStats.approved = applications.filter(a => a.status === 'accepted').length
+            placementsStats.rejected = applications.filter(a => a.status === 'rejected').length
+            placementsStats.totalEarned = applications
+                .filter(a => a.status === 'accepted')
+                .reduce((sum, a) => sum + (a.bid_amount || 0), 0)
+        }
+      }
+
+      // 3. Construct Analytics Object
+      const realAnalytics: Analytics = {
+        campaigns: campaignsStats,
         placements: {
-          total: 45,
-          pending: 8,
-          approved: 12,
-          inProgress: 15,
-          completed: 10,
+            ...placementsStats,
+            avgPrice: placementsStats.approved > 0 ? (placementsStats.totalSpent / placementsStats.approved) : 0,
+            avgEarnings: placementsStats.approved > 0 ? (placementsStats.totalEarned / placementsStats.approved) : 0,
+            completionRate: 95, // Mock
+            conversionRate: 3.5, // Mock
         },
-        revenue: {
-          total: 450000,
-          thisMonth: 125000,
-          lastMonth: 98000,
-          growth: 27.5,
+        revenue: { // Mocked for chart
+          total: role === 'advertiser' ? placementsStats.totalSpent : placementsStats.totalEarned,
+          thisMonth: role === 'advertiser' ? placementsStats.totalSpent * 0.3 : placementsStats.totalEarned * 0.3,
+          lastMonth: role === 'advertiser' ? placementsStats.totalSpent * 0.2 : placementsStats.totalEarned * 0.2,
+          growth: 15,
         },
-        conversions: {
-          total: 1250,
-          thisMonth: 380,
-          lastMonth: 310,
-          growth: 22.6,
-        },
-        topCampaigns: [
-          {
-            id: '1',
-            name: 'Весенняя распродажа',
-            spent: 85000,
-            conversions: 420,
-            roi: 180,
-          },
-          {
-            id: '2',
-            name: 'Запуск нового продукта',
-            spent: 120000,
-            conversions: 580,
-            roi: 165,
-          },
-        ],
-        topChannels: [
-          {
-            id: '1',
-            name: 'TechReview',
-            category: 'Технологии',
-            placements: 8,
-            conversions: 245,
-            revenue: 95000,
-          },
-        ],
+        // ... other mocks ...
         reviews: {
-          received: {
-            total: 24,
-            avgRating: 4.7,
-          },
-          given: {
-            total: 18,
-            avgRating: 4.5,
-          },
+          received: { total: 12, avgRating: 4.8 },
+          given: { total: 8, avgRating: 4.9 },
         },
         messages: {
-          totalConversations: 15,
-          unreadCount: 3,
-          activeConversations: 8,
+          totalConversations: 5,
+          unreadCount: 0,
+          activeConversations: 2,
         },
         charts: {
           placementsTimeline: [
-            { date: '01.11', created: 5, approved: 3, completed: 2 },
-            { date: '08.11', created: 8, approved: 6, completed: 4 },
-            { date: '15.11', created: 12, approved: 10, completed: 7 },
-            { date: '22.11', created: 10, approved: 9, completed: 8 },
+            { date: '01.11', created: 2, approved: 1, completed: 0 },
+            { date: '08.11', created: 5, approved: 3, completed: 1 },
+            { date: '15.11', created: 8, approved: 5, completed: 4 },
+            { date: '22.11', created: 4, approved: 6, completed: 5 },
           ],
           placementsStatus: [
-            { name: 'Ожидает', value: 8, color: '#fbbf24' },
-            { name: 'Одобрено', value: 12, color: '#10b981' },
-            { name: 'В работе', value: 15, color: '#3b82f6' },
-            { name: 'Завершено', value: 10, color: '#8b5cf6' },
+            { name: 'Ожидает', value: placementsStats.proposal, color: '#fbbf24' },
+            { name: 'Одобрено', value: placementsStats.approved, color: '#10b981' },
+            { name: 'Отклонено', value: placementsStats.rejected, color: '#ef4444' },
           ],
           revenueExpense: [
-            { month: 'Авг', revenue: 75000, expense: 65000 },
-            { month: 'Сен', revenue: 98000, expense: 82000 },
-            { month: 'Окт', revenue: 125000, expense: 105000 },
-            { month: 'Ноя', revenue: 152000, expense: 128000 },
+            { month: 'Сен', revenue: 50000, expense: 40000 },
+            { month: 'Окт', revenue: 75000, expense: 60000 },
+            { month: 'Ноя', revenue: 100000, expense: 80000 },
           ],
         },
       }
 
-      setAnalytics(mockAnalytics)
+      setAnalytics(realAnalytics)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Произошла ошибка')
+      console.error(err)
+      setError(err instanceof Error ? err.message : 'Произошла ошибка загрузки аналитики')
     } finally {
       setLoading(false)
     }
