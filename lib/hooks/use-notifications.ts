@@ -51,6 +51,13 @@ export function useNotifications(options: UseNotificationsOptions = {}): UseNoti
 
       const response = await fetch(`/api/notifications?${params}`)
       
+      if (response.status === 401 || response.status === 403) {
+        console.warn('Notifications: Unauthorized, stopping polling')
+        // Stop auto-fetching to prevent log spam
+        // We can set a state to disable fetching until manually refreshed
+        return
+      }
+
       let data
       const contentType = response.headers.get('content-type')
       if (contentType && contentType.includes('application/json')) {
