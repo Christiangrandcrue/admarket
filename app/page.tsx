@@ -14,6 +14,8 @@ import {
   Sparkles
 } from 'lucide-react'
 
+import { HomeSteps } from '@/components/home/home-steps'
+
 export default function HomePage() {
   return (
     <div className="flex flex-col min-h-screen overflow-hidden">
@@ -123,84 +125,7 @@ export default function HomePage() {
       </section>
 
       {/* Steps Section */}
-      <section className="py-24 bg-white">
-        <div className="mx-auto max-w-6xl px-6">
-          <div className="grid gap-16 lg:grid-cols-2 lg:items-center">
-            <div>
-              <h2 className="mb-6 text-3xl font-bold text-gray-900 sm:text-4xl">
-                Запуск кампании <br /> проще, чем кажется
-              </h2>
-              <p className="mb-8 text-lg text-gray-600">
-                Забудьте о долгих переговорах и таблицах в Excel. Мы автоматизировали процесс от подбора до выплаты.
-              </p>
-              
-              <div className="space-y-8">
-                <div className="flex gap-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100 font-bold text-gray-900">1</div>
-                  <div>
-                    <h4 className="mb-1 font-bold text-gray-900">Создайте кампанию</h4>
-                    <p className="text-gray-600">Опишите задачу, бюджет и выберите платформы (Instagram, YouTube, Telegram).</p>
-                  </div>
-                </div>
-                <div className="flex gap-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100 font-bold text-gray-900">2</div>
-                  <div>
-                    <h4 className="mb-1 font-bold text-gray-900">Получите отклики</h4>
-                    <p className="text-gray-600">Заинтересованные блогеры сами отправят заявки, или выберите их в каталоге.</p>
-                  </div>
-                </div>
-                <div className="flex gap-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100 font-bold text-gray-900">3</div>
-                  <div>
-                    <h4 className="mb-1 font-bold text-gray-900">Оплатите результат</h4>
-                    <p className="text-gray-600">Примите работу, и средства автоматически поступят исполнителю.</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-10">
-                 <Button asChild>
-                   <Link href="/dashboard/campaigns">Начать сейчас</Link>
-                 </Button>
-              </div>
-            </div>
-            
-            {/* Visual Decoration */}
-            <div className="relative rounded-2xl bg-gray-50 p-8 lg:p-12">
-               <div className="absolute inset-0 bg-gradient-to-br from-purple-100/50 to-blue-100/50 rounded-2xl"></div>
-               <div className="relative z-10 space-y-6">
-                  {/* Mock Card 1 */}
-                  <div className="flex items-center gap-4 rounded-xl bg-white p-4 shadow-sm">
-                     <div className="h-12 w-12 rounded-full bg-gray-200"></div>
-                     <div className="flex-1 space-y-2">
-                        <div className="h-4 w-3/4 rounded bg-gray-100"></div>
-                        <div className="h-3 w-1/2 rounded bg-gray-50"></div>
-                     </div>
-                     <div className="h-8 w-20 rounded-lg bg-green-100"></div>
-                  </div>
-                  {/* Mock Card 2 */}
-                  <div className="flex items-center gap-4 rounded-xl bg-white p-4 shadow-sm translate-x-4">
-                     <div className="h-12 w-12 rounded-full bg-gray-200"></div>
-                     <div className="flex-1 space-y-2">
-                        <div className="h-4 w-3/4 rounded bg-gray-100"></div>
-                        <div className="h-3 w-1/2 rounded bg-gray-50"></div>
-                     </div>
-                     <div className="h-8 w-20 rounded-lg bg-purple-100"></div>
-                  </div>
-                  {/* Mock Card 3 */}
-                  <div className="flex items-center gap-4 rounded-xl bg-white p-4 shadow-sm">
-                     <div className="h-12 w-12 rounded-full bg-gray-200"></div>
-                     <div className="flex-1 space-y-2">
-                        <div className="h-4 w-3/4 rounded bg-gray-100"></div>
-                        <div className="h-3 w-1/2 rounded bg-gray-50"></div>
-                     </div>
-                     <div className="h-8 w-20 rounded-lg bg-blue-100"></div>
-                  </div>
-               </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <HomeSteps />
 
       {/* CTA Section */}
       <section className="relative py-24 overflow-hidden">
