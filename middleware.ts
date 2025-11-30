@@ -45,6 +45,14 @@ export async function middleware(request: NextRequest) {
 
   // 2. Protected Routes (Require Login)
   if (!user) {
+    // API Routes should return 401 JSON, not redirect to HTML login
+    if (request.nextUrl.pathname.startsWith('/api/')) {
+      return NextResponse.json(
+        { error: 'Unauthorized', message: 'Authentication required' },
+        { status: 401 }
+      )
+    }
+
     const url = request.nextUrl.clone()
     url.pathname = '/auth/login'
     url.searchParams.set('redirectTo', request.nextUrl.pathname)

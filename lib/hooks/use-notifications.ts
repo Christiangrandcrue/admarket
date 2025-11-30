@@ -50,7 +50,17 @@ export function useNotifications(options: UseNotificationsOptions = {}): UseNoti
       })
 
       const response = await fetch(`/api/notifications?${params}`)
-      const data = await response.json()
+      
+      let data
+      const contentType = response.headers.get('content-type')
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json()
+      } else {
+        // Handle non-JSON response (e.g. HTML error page)
+        const text = await response.text()
+        console.error('API returned non-JSON response:', text.slice(0, 100))
+        throw new Error(`Server returned invalid content-type: ${contentType}`)
+      }
 
       if (response.ok) {
         setNotifications(data.notifications || [])
@@ -183,7 +193,7 @@ export function useNotifications(options: UseNotificationsOptions = {}): UseNoti
       console.log('🔌 Unsubscribing from realtime notifications')
       supabase.removeChannel(channel)
     }
-  }, [enableRealtime, user, limit])
+  }, [enableRealtime, user?.id, limit])
 
   return {
     notifications,
