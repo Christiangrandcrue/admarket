@@ -27,14 +27,29 @@ export default function RoleSelectionPage() {
       }
 
       // Update user metadata in Supabase Auth
-      const { error } = await supabase.auth.updateUser({
+      const { error: authError } = await supabase.auth.updateUser({
         data: { 
             role: role,
             status: 'active' // Auto-activate for MVP
         }
       })
 
-      if (error) throw error
+      if (authError) throw authError
+
+      // CRITICAL: Also update 'profiles' table explicitly because middleware checks it
+      // and triggers might be slow or missing
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ 
+            role: role, 
+            status: 'active' 
+        })
+        .eq('id', user.id)
+
+      if (profileError) {
+        console.error('Profile update error:', profileError)
+        // Continue anyway if auth update succeeded, but warn
+      }
 
       toast.success('Роль выбрана! Переходим в кабинет...')
       
